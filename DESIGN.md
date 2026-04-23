@@ -3,10 +3,11 @@ name: Ming
 description: Warm, organic family translator — terracotta accents, jade states, cream foundation.
 colors:
   background: "#f5eee6"
-  surface: "#fffaf6"
+  surface: "rgba(255, 250, 246, 0.52)"
+  surface-strong: "rgba(255, 248, 241, 0.68)"
   ink: "#241615"
   muted: "#6a544d"
-  line: "#f0e8e0"
+  line: "rgba(255, 255, 255, 0.38)"
   primary: "#d95d39"
   primary-deep: "#a43d28"
   secondary: "#f1b858"
@@ -45,17 +46,20 @@ spacing:
   sm: 0.8rem
   md: 1.2rem
   lg: 2rem
+elevation:
+  shadow: "0 8px 32px rgba(48, 23, 15, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.55)"
+  blur: "blur(28px) saturate(160%)"
 components:
   button-record:
     backgroundColor: "{colors.primary}"
     textColor: "#ffffff"
     rounded: 999px
-    size: 7.5rem
+    size: 8rem
   button-record-active:
     backgroundColor: "{colors.primary-deep}"
     textColor: "#ffffff"
     rounded: 999px
-    size: 7.5rem
+    size: 8rem
   button-pill:
     backgroundColor: "{colors.primary}"
     textColor: "#ffffff"
@@ -101,14 +105,15 @@ The palette is rooted in warm neutrals with a single dominant accent (terracotta
 ## Colors
 
 - **background (#f5eee6):** Warm cream — the paper. Every surface reads against this.
-- **surface (#fffaf6):** Near-white with warmth. Cards, panels, topbar.
+- **surface (rgba 52%):** Semi-transparent warm white. Cards, panels, topbar — always layered over the mesh background via glassmorphism.
+- **surface-strong (rgba 68%):** Slightly more opaque variant for active/selected segments and inner containers.
 - **ink (#241615):** Deep brown-black for all primary text. Not pure black — stays warm.
 - **muted (#6a544d):** Warm mid-brown for secondary text, captions, metadata.
-- **line (#f0e8e0):** Barely-there warm border. Separates without dividing.
+- **line (rgba white 38%):** White at low opacity. Gives glass surfaces a bright top-edge highlight rather than a warm border.
 - **primary (#d95d39):** Terracotta. The sole interaction color — record button, CTAs, active states.
-- **primary-deep (#a43d28):** Darker terracota for pressed/hover states and error-adjacent status text.
+- **primary-deep (#a43d28):** Darker terracotta for pressed/hover states and error-adjacent status text.
 - **secondary (#f1b858):** Warm gold for the "processing" state only. Never used for interaction.
-- **secondary-deep (#b47a19):** Gold text on gold backgrounds.
+- **secondary-deep (#7a5200):** Gold text on gold backgrounds. Darkened for WCAG AA contrast.
 - **tertiary (#4c8c78):** Jade green for "ready / success" state only. Calm, resolved.
 - **tertiary-deep (#1e5847):** Jade text on jade backgrounds.
 - **error (#8c2d1d):** Deep terracotta-red for error state text. Distinct from primary.
@@ -136,11 +141,14 @@ Two layout modes:
 
 ## Elevation & Depth
 
-All elevation uses a single warm shadow: `0 24px 60px rgba(48, 23, 15, 0.12)`.
+All elevation uses a single warm compound shadow: `0 8px 32px rgba(48, 23, 15, 0.1)` plus an inset highlight `inset 0 1px 0 rgba(255, 255, 255, 0.55)`.
 
-Surfaces use `backdrop-filter: blur(18px)` (glassmorphism) rather than opaque fills. Two floating orbs in the background — terracotta top-right, jade bottom-left — give the canvas soft ambient color that shifts with content state.
+Surfaces use `backdrop-filter: blur(28px) saturate(160%)` (glassmorphism) rather than opaque fills. Three floating orbs in the background give the canvas soft ambient color:
+- **Orb A** (26rem, top-left): terracotta → gold gradient.
+- **Orb B** (28rem, bottom-right): jade.
+- **Orb C** (20rem, center): warm amber gold.
 
-No hard shadows. No dark overlays. Depth comes from blur, not darkness.
+No hard shadows. No dark overlays. Depth comes from blur and inset highlights, not darkness.
 
 ## Shapes
 
@@ -153,13 +161,13 @@ Never use sharp corners (0px). The minimum border-radius for any interactive ele
 ## Components
 
 ### button-record
-The primary action. 7.5rem circle, terracotta fill, white icon. Pulses when recording (heartbeat animation at 1.4s). Surrounded by two expanding rings (ringPulse at 2.2s) during active recording. Pressed state uses `button-record-active` (primary-deep background).
+The primary action. 8rem circle, terracotta gradient fill, white icon. Emits a permanent low-opacity halo (`idlePulse` at 4s) at rest. Pulses with a heartbeat animation (1.4s) while recording, surrounded by two expanding `ringPulse` rings (2.2s). Pressed state uses `button-record-active` (primary-deep background).
 
 ### button-pill
 Secondary actions, direction toggles, mode switches. Fully rounded, terracotta fill, white text. Hover/active darkens to primary-deep. Padding: 0.75rem vertical, 1.6rem horizontal.
 
 ### card
-The container for transcription + translation output. Warm surface fill with glass blur. Border: 1px solid `line`. Bottom-border receives a tinted accent (terracotta for ES output, gold for ZH output) to signal direction at a glance.
+The container for transcription + translation output. Glassmorphism surface (`surface` token + `blur` elevation). Border: `1px solid line` (white highlight). Bottom-border receives a tinted accent (terracotta for ES output, gold for ZH output) to signal direction at a glance.
 
 ### status-*
 Four contextual states rendered as small inline pills. Each uses a tinted background and matching deep text color:
@@ -170,13 +178,25 @@ Four contextual states rendered as small inline pills. Each uses a tinted backgr
 
 Status pills always use `label` typography with `rounded.pill` shape.
 
+## Animations
+
+All transforms use a spring easing: `cubic-bezier(0.34, 1.56, 0.64, 1)`.
+
+- **idlePulse** (4s, infinite): faint terracotta halo rings expanding from the record button at rest.
+- **heartbeat** (1.4s, infinite): scale 1 → 1.06 → 1 during active recording.
+- **ringPulse** (2.2s, infinite): two concentric rings expanding and fading during recording.
+- **cardReveal**: card entrance — scale 0.97 + translateY(10px) → natural, opacity 0 → 1.
+- **riseIn**: panel entrance — scale 0.98 + translateY(20px) → natural, opacity 0 → 1.
+
+Respect `prefers-reduced-motion: reduce` — strip all keyframe animations, retain only opacity transitions.
+
 ## Do's and Don'ts
 
 **Do:**
 - Use `primary` exclusively for interactive affordances (record, play, tap actions).
 - Use `secondary` and `tertiary` exclusively for status communication — never for decorative or structural elements.
-- Apply `backdrop-filter: blur(18px)` to all floating surfaces (cards, topbar).
-- Respect `prefers-reduced-motion: reduce` — remove all keyframe animations, keep only opacity transitions.
+- Apply `backdrop-filter: blur(28px) saturate(160%)` to all floating surfaces (cards, topbar).
+- Use white-rgba for `line` — it reads as a glass highlight, not a divider.
 - Use `clamp()` for all font sizes to maintain readability from 320px to 1440px without breakpoint hacks.
 
 **Don't:**
@@ -185,3 +205,4 @@ Status pills always use `label` typography with `rounded.pill` shape.
 - Don't add box-shadows with cool (blue/grey) tones. All shadows use warm brown-red bases.
 - Don't use font-weight 300 or lighter. The minimum readable weight on these cream backgrounds is 400.
 - Don't use hard borders (`2px+`) — prefer `1px solid line` or no border with shadow.
+- Don't use solid opaque backgrounds for cards — always layer over the mesh with glassmorphism.
