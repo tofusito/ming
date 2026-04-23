@@ -1,0 +1,839 @@
+import { useEffect, useMemo, useRef, useState } from "react";
+
+type Mode = "walkie" | "split";
+type Direction = "zh_to_es" | "es_to_zh";
+type Side = "top" | "bottom";
+type PanelKey = "walkie" | Side;
+type PanelPhase = "idle" | "recording" | "processing" | "ready" | "error";
+
+type TurnResponse = {
+  transcript: string;
+  translation: string;
+  output_language: string;
+  audio_base64?: string | null;
+  audio_content_type?: string | null;
+};
+
+type PanelState = {
+  phase: PanelPhase;
+  transcript: string;
+  translation: string;
+  error: string | null;
+  audioUrl: string | null;
+};
+
+type CaptureTarget = {
+  key: PanelKey;
+  direction: Direction;
+};
+
+const INITIAL_PANEL: PanelState = {
+  phase: "idle",
+  transcript: "",
+  translation: "",
+  error: null,
+  audioUrl: null,
+};
+
+type DirectionCopy = {
+  heroTitle: string;
+  heroHintIdle: string;
+  heroHintRecording: string;
+  heroHintProcessing: string;
+  statusIdle: string;
+  statusRecording: string;
+  statusProcessing: string;
+  statusReady: string;
+  statusError: string;
+  transcriptLabel: string;
+  transcriptEmpty: string;
+  translationLabel: string;
+  translationEmpty: string;
+  recordLabelIdle: string;
+  recordLabelRecording: string;
+  playLabel: string;
+  playingLabel: string;
+  splitTitle: string;
+  splitSubtitle: string;
+};
+
+function directionLabel(direction: Direction): string {
+  return direction === "zh_to_es" ? "中文 -> Español" : "Español -> 中文";
+}
+
+function directionCopy(direction: Direction): DirectionCopy {
+  if (direction === "zh_to_es") {
+    return {
+      heroTitle: "请讲中文",
+      heroHintIdle: "按一次开始说话，再按一次停止并翻译。",
+      heroHintRecording: "再按一次即可停止并翻译。",
+      heroHintProcessing: "正在处理语音、文字和翻译。",
+      statusIdle: "等待中",
+      statusRecording: "正在听",
+      statusProcessing: "翻译中",
+      statusReady: "已完成",
+      statusError: "错误",
+      transcriptLabel: "识别到的中文",
+      transcriptEmpty: "这里会显示识别到的中文。",
+      translationLabel: "Traducido al español",
+      translationEmpty: "Aquí aparecerá la traducción final en español.",
+      recordLabelIdle: "说话",
+      recordLabelRecording: "停止",
+      playLabel: "播放",
+      playingLabel: "播放中",
+      splitTitle: "中文",
+      splitSubtitle: "Habla en chino",
+    };
+  }
+
+  return {
+    heroTitle: "Habla en español",
+    heroHintIdle: "Toca una vez para hablar. Toca otra vez para traducir.",
+    heroHintRecording: "Pulsa otra vez para detener y traducir.",
+    heroHintProcessing: "Procesando audio, texto y voz.",
+    statusIdle: "En espera",
+    statusRecording: "Escuchando",
+    statusProcessing: "Traduciendo",
+    statusReady: "Listo",
+    statusError: "Error",
+    transcriptLabel: "Texto detectado en español",
+    transcriptEmpty: "Aquí aparecerá la transcripción en español.",
+    translationLabel: "翻译成中文",
+    translationEmpty: "这里会显示翻译后的中文。",
+    recordLabelIdle: "Hablar",
+    recordLabelRecording: "Parar",
+    playLabel: "Reproducir",
+    playingLabel: "Sonando",
+    splitTitle: "Español",
+    splitSubtitle: "Habla en español",
+  };
+}
+
+function statusLabel(phase: PanelPhase, copy: DirectionCopy): string {
+  switch (phase) {
+    case "recording":
+      return copy.statusRecording;
+    case "processing":
+      return copy.statusProcessing;
+    case "ready":
+      return copy.statusReady;
+    case "error":
+      return copy.statusError;
+    default:
+      return copy.statusIdle;
+  }
+}
+
+function buildBlobUrl(base64Audio?: string | null, contentType?: string | null): string | null {
+  if (!base64Audio) {
+    return null;
+  }
+
+  const binary = atob(base64Audio);
+  const bytes = new Uint8Array(binary.length);
+  for (let index = 0; index < binary.length; index += 1) {
+    bytes[index] = binary.charCodeAt(index);
+  }
+
+  return URL.createObjectURL(new Blob([bytes], { type: contentType || "audio/wav" }));
+}
+
+async function sendTurn(blob: Blob, direction: Direction, speakEnabled: boolean): Promise<TurnResponse> {
+  const formData = new FormData();
+  formData.append("direction", direction);
+  formData.append("speak", speakEnabled ? "true" : "false");
+  formData.append("audio", blob, "turn.webm");
+
+  const response = await fetch("/api/turn", {
+    method: "POST",
+    body: formData,
+  });
+
+  if (!response.ok) {
+    const message = await response.text();
+    throw new Error(message || "La traducción no ha respondido correctamente.");
+  }
+
+  return (await response.json()) as TurnResponse;
+}
+
+function pickMimeType(): string | undefined {
+  if (typeof MediaRecorder === "undefined") {
+    return undefined;
+  }
+
+  const candidates = [
+    "audio/webm;codecs=opus",
+    "audio/mp4",
+    "audio/webm",
+    "audio/ogg;codecs=opus",
+  ];
+
+  return candidates.find((candidate) => MediaRecorder.isTypeSupported(candidate));
+}
+
+function microphoneAvailabilityError(): string | null {
+  if (typeof navigator === "undefined") {
+    return "No se pudo inicializar el navegador.";
+  }
+
+  if (!window.isSecureContext) {
+    return "El microfono solo funciona en HTTPS o en localhost. Abre la app con HTTPS o usa localhost en este dispositivo.";
+  }
+
+  if (!navigator.mediaDevices?.getUserMedia) {
+    return "Este navegador no expone la API de microfono.";
+  }
+
+  if (typeof MediaRecorder === "undefined") {
+    return "Este navegador no soporta grabacion de audio en web.";
+  }
+
+  return null;
+}
+
+export default function App() {
+  const [mode, setMode] = useState<Mode>("walkie");
+  const [walkieDirection, setWalkieDirection] = useState<Direction>("zh_to_es");
+  const [splitTopLanguage, setSplitTopLanguage] = useState<"zh" | "es">("zh");
+  const [speakEnabled, setSpeakEnabled] = useState(true);
+  const [activeKey, setActiveKey] = useState<PanelKey | null>(null);
+  const [playingKey, setPlayingKey] = useState<PanelKey | null>(null);
+  const [lastSplitSource, setLastSplitSource] = useState<Side | null>(null);
+  const [panels, setPanels] = useState<Record<PanelKey, PanelState>>({
+    walkie: INITIAL_PANEL,
+    top: INITIAL_PANEL,
+    bottom: INITIAL_PANEL,
+  });
+
+  const recorderRef = useRef<MediaRecorder | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const chunksRef = useRef<Blob[]>([]);
+  const captureTargetRef = useRef<CaptureTarget | null>(null);
+  const panelsRef = useRef(panels);
+  const busyRef = useRef(false);
+
+  const isBusy = activeKey !== null;
+  const topDirection = splitTopLanguage === "zh" ? "zh_to_es" : "es_to_zh";
+  const bottomDirection = topDirection === "zh_to_es" ? "es_to_zh" : "zh_to_es";
+  const walkieCopy = directionCopy(walkieDirection);
+  const topCopy = directionCopy(topDirection);
+  const bottomCopy = directionCopy(bottomDirection);
+
+  useEffect(() => {
+    panelsRef.current = panels;
+  }, [panels]);
+
+  useEffect(() => {
+    return () => {
+      const currentAudio = audioRef.current;
+      if (currentAudio) {
+        audioRef.current = null;
+        currentAudio.pause();
+        currentAudio.src = "";
+      }
+      Object.values(panelsRef.current).forEach((panel) => {
+        if (panel.audioUrl) {
+          URL.revokeObjectURL(panel.audioUrl);
+        }
+      });
+      streamRef.current?.getTracks().forEach((track) => track.stop());
+    };
+  }, []);
+
+  function updatePanel(key: PanelKey, updater: PanelState | ((current: PanelState) => PanelState)) {
+    setPanels((current) => {
+      const previous = current[key];
+      const next = typeof updater === "function" ? updater(previous) : updater;
+
+      if (previous.audioUrl && previous.audioUrl !== next.audioUrl) {
+        URL.revokeObjectURL(previous.audioUrl);
+      }
+
+      return {
+        ...current,
+        [key]: next,
+      };
+    });
+  }
+
+  function stopCurrentAudio() {
+    const currentAudio = audioRef.current;
+    if (!currentAudio) {
+      setPlayingKey(null);
+      return;
+    }
+
+    audioRef.current = null;
+    currentAudio.onended = null;
+    currentAudio.onerror = null;
+    currentAudio.pause();
+    currentAudio.src = "";
+    setPlayingKey(null);
+  }
+
+  async function playAudioUrl(key: PanelKey, audioUrl: string): Promise<boolean> {
+    stopCurrentAudio();
+
+    const audio = new Audio(audioUrl);
+    audioRef.current = audio;
+    setPlayingKey(key);
+
+    const clearPlayback = () => {
+      if (audioRef.current === audio) {
+        audioRef.current = null;
+      }
+      setPlayingKey((current) => (current === key ? null : current));
+    };
+
+    audio.onended = clearPlayback;
+    audio.onerror = clearPlayback;
+
+    try {
+      await audio.play();
+      return true;
+    } catch {
+      clearPlayback();
+      return false;
+    }
+  }
+
+  function applySplitTurn(source: Side, payload: TurnResponse, audioUrl: string | null) {
+    const target: Side = source === "top" ? "bottom" : "top";
+
+    updatePanel(source, {
+      phase: "ready",
+      transcript: payload.transcript,
+      translation: payload.translation,
+      error: null,
+      audioUrl: null,
+    });
+
+    updatePanel(target, {
+      phase: "ready",
+      transcript: payload.transcript,
+      translation: payload.translation,
+      error: null,
+      audioUrl,
+    });
+
+    setLastSplitSource(source);
+  }
+
+  async function startCapture(target: CaptureTarget) {
+    if (busyRef.current || isBusy) {
+      return;
+    }
+    busyRef.current = true;
+
+    const availabilityError = microphoneAvailabilityError();
+    if (availabilityError) {
+      updatePanel(target.key, {
+        ...INITIAL_PANEL,
+        phase: "error",
+        error: availabilityError,
+      });
+      busyRef.current = false;
+      return;
+    }
+
+    updatePanel(target.key, (current) => ({
+      ...current,
+      phase: "recording",
+      error: null,
+    }));
+    setActiveKey(target.key);
+
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
+        },
+      });
+      streamRef.current = stream;
+
+      const mimeType = pickMimeType();
+      const recorder = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream);
+      recorderRef.current = recorder;
+      captureTargetRef.current = target;
+      chunksRef.current = [];
+
+      recorder.addEventListener("dataavailable", (event) => {
+        if (event.data.size > 0) {
+          chunksRef.current.push(event.data);
+        }
+      });
+
+      recorder.addEventListener("stop", async () => {
+        const currentTarget = captureTargetRef.current;
+        const currentStream = streamRef.current;
+        streamRef.current = null;
+        currentStream?.getTracks().forEach((track) => track.stop());
+
+        if (!currentTarget) {
+          setActiveKey(null);
+          return;
+        }
+
+        updatePanel(currentTarget.key, (current) => ({
+          ...current,
+          phase: "processing",
+        }));
+
+        try {
+          const blob = new Blob(chunksRef.current, { type: recorder.mimeType || "audio/webm" });
+          const payload = await sendTurn(blob, currentTarget.direction, speakEnabled);
+          const audioUrl = buildBlobUrl(payload.audio_base64, payload.audio_content_type);
+
+          if (currentTarget.key === "walkie") {
+            updatePanel(currentTarget.key, {
+              phase: "ready",
+              transcript: payload.transcript,
+              translation: payload.translation,
+              error: null,
+              audioUrl,
+            });
+
+            if (audioUrl && speakEnabled) {
+              void playAudioUrl("walkie", audioUrl);
+            }
+          } else {
+            applySplitTurn(currentTarget.key, payload, audioUrl);
+
+            const playbackKey = currentTarget.key === "top" ? "bottom" : "top";
+            if (audioUrl && speakEnabled) {
+              void playAudioUrl(playbackKey, audioUrl);
+            }
+          }
+        } catch (error) {
+          updatePanel(currentTarget.key, (current) => ({
+            ...current,
+            phase: "error",
+            error: error instanceof Error ? error.message : "No se pudo procesar el turno.",
+          }));
+        } finally {
+          recorderRef.current = null;
+          captureTargetRef.current = null;
+          chunksRef.current = [];
+          busyRef.current = false;
+          setActiveKey(null);
+        }
+      });
+
+      recorder.start();
+    } catch (error) {
+      const message =
+        error instanceof DOMException
+          ? error.name === "NotAllowedError"
+            ? "No se pudo acceder al microfono. Revisa el permiso del navegador para esta pagina."
+            : error.name === "NotFoundError"
+              ? "No se encontro ningun microfono disponible en este dispositivo."
+              : error.message
+          : error instanceof Error
+            ? error.message
+            : "No se pudo acceder al microfono.";
+
+      streamRef.current?.getTracks().forEach((track) => track.stop());
+      streamRef.current = null;
+      recorderRef.current = null;
+      captureTargetRef.current = null;
+      chunksRef.current = [];
+      busyRef.current = false;
+      setActiveKey(null);
+      updatePanel(target.key, {
+        ...INITIAL_PANEL,
+        phase: "error",
+        error: message,
+      });
+    }
+  }
+
+  function stopCapture() {
+    if (recorderRef.current?.state === "recording") {
+      recorderRef.current.stop();
+    }
+  }
+
+  function handleWalkieToggle() {
+    const panel = panels.walkie;
+    if (activeKey === "walkie" && panel.phase === "recording") {
+      stopCapture();
+      return;
+    }
+
+    void startCapture({
+      key: "walkie",
+      direction: walkieDirection,
+    });
+  }
+
+  function handleSplitToggle(side: Side) {
+    const key = side;
+    const panel = panels[key];
+    if (activeKey === key && panel.phase === "recording") {
+      stopCapture();
+      return;
+    }
+
+    const direction = side === "top" ? topDirection : bottomDirection;
+    void startCapture({ key, direction });
+  }
+
+  async function playAudio(key: PanelKey) {
+    const audioUrl = panels[key].audioUrl;
+    if (!audioUrl) {
+      return;
+    }
+
+    await playAudioUrl(key, audioUrl);
+  }
+
+  const walkieHint = useMemo(() => {
+    if (walkieDirection === "zh_to_es") {
+      if (panels.walkie.phase === "recording") {
+        return walkieCopy.heroHintRecording;
+      }
+      if (panels.walkie.phase === "processing") {
+        return walkieCopy.heroHintProcessing;
+      }
+      return walkieCopy.heroHintIdle;
+    }
+
+    if (panels.walkie.phase === "recording") {
+      return walkieCopy.heroHintRecording;
+    }
+    if (panels.walkie.phase === "processing") {
+      return walkieCopy.heroHintProcessing;
+    }
+    return walkieCopy.heroHintIdle;
+  }, [panels.walkie.phase, walkieCopy, walkieDirection]);
+
+  return (
+    <main className="app-shell">
+      <div className="background-orb background-orb-a" />
+      <div className="background-orb background-orb-b" />
+
+      <section className={`app-frame ${mode === "split" ? "app-frame-split" : ""}`}>
+        {mode === "walkie" ? (
+          <header className="topbar">
+            <div className="brand-block">
+              <span className="eyebrow">Ming</span>
+              <h1>Traductor familiar</h1>
+            </div>
+
+            <div className="topbar-actions">
+              <SegmentedControl
+                value={mode}
+                options={[
+                  { label: "Walkie", value: "walkie" },
+                  { label: "Split", value: "split" },
+                ]}
+                onChange={(value) => setMode(value as Mode)}
+              />
+
+              <button
+                className={`voice-toggle ${speakEnabled ? "voice-toggle-on" : ""}`}
+                onClick={() => setSpeakEnabled((current) => !current)}
+                type="button"
+              >
+                Voz {speakEnabled ? "on" : "off"}
+              </button>
+            </div>
+          </header>
+        ) : null}
+
+        {mode === "walkie" ? (
+          <section className="walkie-layout panel-enter">
+            <div className="direction-bar">
+              <SegmentedControl
+                value={walkieDirection}
+                options={[
+                  { label: "中文 -> Español", value: "zh_to_es" },
+                  { label: "Español -> 中文", value: "es_to_zh" },
+                ]}
+                onChange={(value) => setWalkieDirection(value as Direction)}
+              />
+            </div>
+
+            <section className="hero-card">
+              <div className="hero-copy">
+                <span className={`status-pill status-${panels.walkie.phase}`}>
+                  {statusLabel(panels.walkie.phase, walkieCopy)}
+                </span>
+                <h2>{walkieCopy.heroTitle}</h2>
+                <p>{walkieHint}</p>
+              </div>
+
+              <button
+                className={`record-button ${panels.walkie.phase === "recording" ? "is-recording" : ""} ${
+                  panels.walkie.phase === "processing" ? "is-processing" : ""
+                }`}
+                onClick={handleWalkieToggle}
+                disabled={isBusy && activeKey !== "walkie"}
+                type="button"
+              >
+                <span className="record-button-core">
+                  {panels.walkie.phase === "recording"
+                    ? walkieCopy.recordLabelRecording
+                    : walkieCopy.recordLabelIdle}
+                </span>
+                <span className="record-ring record-ring-a" />
+                <span className="record-ring record-ring-b" />
+              </button>
+            </section>
+
+            <section className="card-stack">
+              <TurnCard
+                accent="terracotta"
+                label={walkieCopy.transcriptLabel}
+                content={panels.walkie.transcript}
+                empty={walkieCopy.transcriptEmpty}
+              />
+              <TurnCard
+                accent="gold"
+                label={walkieCopy.translationLabel}
+                content={panels.walkie.translation}
+                empty={walkieCopy.translationEmpty}
+                actionLabel="Reproducir"
+                actionDisabled={!panels.walkie.audioUrl}
+                isPlaying={playingKey === "walkie"}
+                onAction={() => void playAudio("walkie")}
+              />
+            </section>
+
+            {panels.walkie.error ? <p className="error-banner">{panels.walkie.error}</p> : null}
+          </section>
+        ) : (
+          <section className="split-layout panel-enter">
+            <SplitPane
+              side="top"
+              title={topCopy.splitTitle}
+              direction={topDirection}
+              panel={panels.top}
+              lastSource={lastSplitSource}
+              isActive={activeKey === "top"}
+              isBusy={isBusy && activeKey !== "top"}
+              isPlaying={playingKey === "top"}
+              onRecord={() => handleSplitToggle("top")}
+              onPlay={() => void playAudio("top")}
+            />
+
+            <div className="split-toolbar">
+              <span className="split-language-tag">{topCopy.splitTitle}</span>
+
+              <div className="split-toolbar-actions">
+                <SegmentedControl
+                  value={mode}
+                  options={[
+                    { label: "Walkie", value: "walkie" },
+                    { label: "Split", value: "split" },
+                  ]}
+                  onChange={(value) => setMode(value as Mode)}
+                  className="segmented-control-compact"
+                  ariaLabel="Modo"
+                />
+
+                <button
+                  className={`voice-toggle voice-toggle-compact ${speakEnabled ? "voice-toggle-on" : ""}`}
+                  onClick={() => setSpeakEnabled((current) => !current)}
+                  type="button"
+                >
+                  Voz
+                </button>
+
+                <button
+                  className="swap-button"
+                  onClick={() => setSplitTopLanguage((current) => (current === "zh" ? "es" : "zh"))}
+                  type="button"
+                  disabled={isBusy}
+                >
+                  Cambiar
+                </button>
+              </div>
+
+              <span className="split-language-tag">{bottomCopy.splitTitle}</span>
+            </div>
+
+            <SplitPane
+              side="bottom"
+              title={bottomCopy.splitTitle}
+              direction={bottomDirection}
+              panel={panels.bottom}
+              lastSource={lastSplitSource}
+              isActive={activeKey === "bottom"}
+              isBusy={isBusy && activeKey !== "bottom"}
+              isPlaying={playingKey === "bottom"}
+              onRecord={() => handleSplitToggle("bottom")}
+              onPlay={() => void playAudio("bottom")}
+            />
+          </section>
+        )}
+      </section>
+    </main>
+  );
+}
+
+function SegmentedControl({
+  options,
+  value,
+  onChange,
+  className,
+  ariaLabel,
+}: {
+  options: Array<{ label: string; value: string }>;
+  value: string;
+  onChange: (value: string) => void;
+  className?: string;
+  ariaLabel?: string;
+}) {
+  const activeIndex = options.findIndex((option) => option.value === value);
+
+  return (
+    <div className={`segmented-control ${className || ""}`.trim()} role="tablist" aria-label={ariaLabel || "Vista"}>
+      <span
+        className="segmented-thumb"
+        style={{
+          width: `${100 / options.length}%`,
+          transform: `translateX(${activeIndex * 100}%)`,
+        }}
+      />
+      {options.map((option) => (
+        <button
+          key={option.value}
+          className={`segmented-option ${option.value === value ? "is-selected" : ""}`}
+          onClick={() => onChange(option.value)}
+          type="button"
+        >
+          {option.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function TurnCard({
+  accent,
+  label,
+  content,
+  empty,
+  actionLabel,
+  actionDisabled,
+  isPlaying,
+  onAction,
+}: {
+  accent: "terracotta" | "gold";
+  label: string;
+  content: string;
+  empty: string;
+  actionLabel?: string;
+  actionDisabled?: boolean;
+  isPlaying?: boolean;
+  onAction?: () => void;
+}) {
+  return (
+    <article className={`turn-card turn-card-${accent} ${content ? "card-filled" : ""}`}>
+      <div className="turn-card-header">
+        <span>{label}</span>
+        {actionLabel ? (
+          <button
+            className={`mini-action ${isPlaying ? "is-playing" : ""}`}
+            disabled={actionDisabled}
+            onClick={onAction}
+            type="button"
+          >
+            {isPlaying ? "Sonando" : actionLabel}
+          </button>
+        ) : null}
+      </div>
+      <p>{content || empty}</p>
+    </article>
+  );
+}
+
+function SplitPane({
+  side,
+  title,
+  direction,
+  panel,
+  lastSource,
+  isActive,
+  isBusy,
+  isPlaying,
+  onRecord,
+  onPlay,
+}: {
+  side: Side;
+  title: string;
+  direction: Direction;
+  panel: PanelState;
+  lastSource: Side | null;
+  isActive: boolean;
+  isBusy: boolean;
+  isPlaying: boolean;
+  onRecord: () => void;
+  onPlay: () => void;
+}) {
+  const copy = directionCopy(direction);
+  const isSourcePane = lastSource === side;
+  const primaryLabel = isSourcePane ? copy.transcriptLabel : copy.translationLabel;
+  const primaryText = isSourcePane ? panel.transcript : panel.translation;
+  const primaryEmpty = isSourcePane ? copy.transcriptEmpty : copy.translationEmpty;
+  const secondaryLabel = isSourcePane ? copy.translationLabel : copy.transcriptLabel;
+  const secondaryText = isSourcePane ? panel.translation : panel.transcript;
+
+  return (
+    <section className={`split-pane split-pane-${side} ${isActive ? "is-active" : ""}`}>
+      <div className={`split-pane-inner ${side === "top" ? "rotated" : ""}`}>
+        <div className="split-pane-header">
+          <div>
+            <span className="eyebrow">{title}</span>
+            <h2>{isSourcePane ? copy.splitSubtitle : primaryLabel}</h2>
+          </div>
+          <span className={`status-pill status-${panel.phase}`}>{statusLabel(panel.phase, copy)}</span>
+        </div>
+
+        <div className="split-stage">
+          <p className={`split-primary ${primaryText ? "is-filled" : "is-empty"}`}>{primaryText || primaryEmpty}</p>
+
+          {secondaryText ? (
+            <div className="split-secondary">
+              <span>{secondaryLabel}</span>
+              <p>{secondaryText}</p>
+            </div>
+          ) : null}
+        </div>
+
+        <div className="split-action-row">
+          <button
+            className={`record-button split-record-button ${panel.phase === "recording" ? "is-recording" : ""} ${
+              panel.phase === "processing" ? "is-processing" : ""
+            }`}
+            onClick={onRecord}
+            disabled={isBusy}
+            type="button"
+          >
+            <span className="record-button-core">
+              {panel.phase === "recording" ? copy.recordLabelRecording : copy.recordLabelIdle}
+            </span>
+            <span className="record-ring record-ring-a" />
+            <span className="record-ring record-ring-b" />
+          </button>
+
+          <button
+            className={`mini-action split-play-action ${isPlaying ? "is-playing" : ""}`}
+            disabled={!panel.audioUrl}
+            onClick={onPlay}
+            type="button"
+          >
+            {isPlaying ? copy.playingLabel : copy.playLabel}
+          </button>
+        </div>
+
+        {panel.error ? <p className="error-banner">{panel.error}</p> : null}
+      </div>
+    </section>
+  );
+}

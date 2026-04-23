@@ -1,0 +1,17 @@
+{
+  "name": "Ming Translator",
+  "short_name": "Ming",
+  "description": "Traductor familiar con voz entre chino y español.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f5eee6",
+  "theme_color": "#f5eee6",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

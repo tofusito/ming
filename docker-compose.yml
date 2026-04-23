@@ -1,0 +1,48 @@
+services:
+  web:
+    build:
+      context: ./web
+    container_name: ming-translator-web
+    restart: unless-stopped
+    depends_on:
+      - api
+    ports:
+      - "3000:80"
+
+  api:
+    build:
+      context: ./services/api
+    container_name: ming-translator-api
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      STT_URL: http://stt:9001
+      TTS_URL: http://tts:9002
+    depends_on:
+      - stt
+      - tts
+
+  stt:
+    build:
+      context: ./services/stt
+    container_name: ming-translator-stt
+    restart: unless-stopped
+    env_file:
+      - .env
+    volumes:
+      - stt-cache:/root/.cache/huggingface
+
+  tts:
+    build:
+      context: ./services/tts
+    container_name: ming-translator-tts
+    restart: unless-stopped
+    env_file:
+      - .env
+    volumes:
+      - tts-cache:/root/.local/share/piper
+
+volumes:
+  stt-cache:
+  tts-cache:
