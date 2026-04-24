@@ -564,17 +564,15 @@ export default function App() {
               />
             </section>
 
-            <section className="hero-card">
-              <div className="hero-copy">
-                <span className={`status-pill status-${panels.walkie.phase}`}>
-                  {statusLabel(panels.walkie.phase, walkieCopy)}
-                </span>
-                <h2>{walkieCopy.heroTitle}</h2>
-                <p>{walkieHint}</p>
-              </div>
-
+            <div className="walkie-action-bar">
+              {panels.walkie.error ? (
+                <p className="error-banner walkie-error">{panels.walkie.error}</p>
+              ) : null}
+              <span className={`status-pill status-${panels.walkie.phase}`}>
+                {statusLabel(panels.walkie.phase, walkieCopy)}
+              </span>
               <button
-                className={`record-button ${panels.walkie.phase === "recording" ? "is-recording" : ""} ${
+                className={`record-button walkie-record-button ${panels.walkie.phase === "recording" ? "is-recording" : ""} ${
                   panels.walkie.phase === "processing" ? "is-processing" : ""
                 }`}
                 onClick={handleWalkieToggle}
@@ -589,9 +587,7 @@ export default function App() {
                 <span className="record-ring record-ring-a" />
                 <span className="record-ring record-ring-b" />
               </button>
-            </section>
-
-            {panels.walkie.error ? <p className="error-banner">{panels.walkie.error}</p> : null}
+            </div>
           </section>
         ) : (
           <section className="split-layout panel-enter">
