@@ -526,7 +526,7 @@ export default function App() {
   }, [panels.walkie.phase, walkieCopy, walkieDirection]);
 
   return (
-    <main className="app-shell">
+    <main className={`app-shell app-shell-${mode}`}>
       <div className="background-orb background-orb-a" />
       <div className="background-orb background-orb-b" />
 
