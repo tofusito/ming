@@ -58,7 +58,20 @@ type DirectionCopy = {
 };
 
 function directionLabel(direction: Direction): string {
-  return direction === "zh_to_es" ? "中文 -> Español" : "Español -> 中文";
+  return direction === "zh_to_es" ? "中文 a Español" : "Español a 中文";
+}
+
+function DirectionOptionLabel({ direction }: { direction: Direction }) {
+  const source = direction === "zh_to_es" ? "中文" : "Español";
+  const target = direction === "zh_to_es" ? "Español" : "中文";
+
+  return (
+    <span className="direction-option-label">
+      <span>{source}</span>
+      <span className="direction-glyph" aria-hidden="true">⇄</span>
+      <span>{target}</span>
+    </span>
+  );
 }
 
 function directionCopy(direction: Direction): DirectionCopy {
@@ -75,8 +88,8 @@ function directionCopy(direction: Direction): DirectionCopy {
       statusError: "错误",
       transcriptLabel: "识别到的中文",
       transcriptEmpty: "这里会显示识别到的中文。",
-      translationLabel: "Traducido al español",
-      translationEmpty: "Aquí aparecerá la traducción final en español.",
+      translationLabel: "翻译成西班牙语",
+      translationEmpty: "这里会显示西班牙语翻译。",
       recordLabelIdle: "说话",
       recordLabelRecording: "停止",
       playLabel: "播放",
@@ -98,8 +111,8 @@ function directionCopy(direction: Direction): DirectionCopy {
     statusError: "Error",
     transcriptLabel: "Texto detectado en español",
     transcriptEmpty: "Aquí aparecerá la transcripción en español.",
-    translationLabel: "翻译成中文",
-    translationEmpty: "这里会显示翻译后的中文。",
+    translationLabel: "Traducido al chino",
+    translationEmpty: "Aquí aparecerá la traducción final en chino.",
     recordLabelIdle: "Hablar",
     recordLabelRecording: "Parar",
     playLabel: "Reproducir",
@@ -197,6 +210,7 @@ export default function App() {
   const [walkieDirection, setWalkieDirection] = useState<Direction>("zh_to_es");
   const [splitTopLanguage, setSplitTopLanguage] = useState<"zh" | "es">("zh");
   const [speakEnabled, setSpeakEnabled] = useState(true);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const [activeKey, setActiveKey] = useState<PanelKey | null>(null);
   const [playingKey, setPlayingKey] = useState<PanelKey | null>(null);
   const [lastSplitSource, setLastSplitSource] = useState<Side | null>(null);
@@ -518,45 +532,37 @@ export default function App() {
 
       <section className={`app-frame ${mode === "split" ? "app-frame-split" : ""}`}>
         {mode === "walkie" ? (
-          <header className="topbar">
-            <div className="brand-block">
-              <span className="eyebrow">Ming</span>
-              <h1>Traductor familiar</h1>
-            </div>
-
-            <div className="topbar-actions">
-              <SegmentedControl
-                value={mode}
-                options={[
-                  { label: "Walkie", value: "walkie" },
-                  { label: "Split", value: "split" },
-                ]}
-                onChange={(value) => setMode(value as Mode)}
-              />
-
-              <button
-                className={`voice-toggle ${speakEnabled ? "voice-toggle-on" : ""}`}
-                onClick={() => setSpeakEnabled((current) => !current)}
-                type="button"
-              >
-                Voz {speakEnabled ? "on" : "off"}
-              </button>
-            </div>
-          </header>
-        ) : null}
-
-        {mode === "walkie" ? (
           <section className="walkie-layout panel-enter">
             <div className="direction-bar">
               <SegmentedControl
                 value={walkieDirection}
                 options={[
-                  { label: "中文 -> Español", value: "zh_to_es" },
-                  { label: "Español -> 中文", value: "es_to_zh" },
+                  { label: <DirectionOptionLabel direction="zh_to_es" />, value: "zh_to_es" },
+                  { label: <DirectionOptionLabel direction="es_to_zh" />, value: "es_to_zh" },
                 ]}
                 onChange={(value) => setWalkieDirection(value as Direction)}
               />
             </div>
+
+            <section className="card-stack">
+              <TurnCard
+                accent="terracotta"
+                label={walkieCopy.transcriptLabel}
+                content={panels.walkie.transcript}
+                empty={walkieCopy.transcriptEmpty}
+              />
+              <TurnCard
+                accent="gold"
+                label={walkieCopy.translationLabel}
+                content={panels.walkie.translation}
+                empty={walkieCopy.translationEmpty}
+                actionLabel={walkieCopy.playLabel}
+                actionActiveLabel={walkieCopy.playingLabel}
+                actionDisabled={!panels.walkie.audioUrl}
+                isPlaying={playingKey === "walkie"}
+                onAction={() => void playAudio("walkie")}
+              />
+            </section>
 
             <section className="hero-card">
               <div className="hero-copy">
@@ -585,25 +591,6 @@ export default function App() {
               </button>
             </section>
 
-            <section className="card-stack">
-              <TurnCard
-                accent="terracotta"
-                label={walkieCopy.transcriptLabel}
-                content={panels.walkie.transcript}
-                empty={walkieCopy.transcriptEmpty}
-              />
-              <TurnCard
-                accent="gold"
-                label={walkieCopy.translationLabel}
-                content={panels.walkie.translation}
-                empty={walkieCopy.translationEmpty}
-                actionLabel="Reproducir"
-                actionDisabled={!panels.walkie.audioUrl}
-                isPlaying={playingKey === "walkie"}
-                onAction={() => void playAudio("walkie")}
-              />
-            </section>
-
             {panels.walkie.error ? <p className="error-banner">{panels.walkie.error}</p> : null}
           </section>
         ) : (
@@ -621,42 +608,6 @@ export default function App() {
               onPlay={() => void playAudio("top")}
             />
 
-            <div className="split-toolbar">
-              <span className="split-language-tag">{topCopy.splitTitle}</span>
-
-              <div className="split-toolbar-actions">
-                <SegmentedControl
-                  value={mode}
-                  options={[
-                    { label: "Walkie", value: "walkie" },
-                    { label: "Split", value: "split" },
-                  ]}
-                  onChange={(value) => setMode(value as Mode)}
-                  className="segmented-control-compact"
-                  ariaLabel="Modo"
-                />
-
-                <button
-                  className={`voice-toggle voice-toggle-compact ${speakEnabled ? "voice-toggle-on" : ""}`}
-                  onClick={() => setSpeakEnabled((current) => !current)}
-                  type="button"
-                >
-                  Voz
-                </button>
-
-                <button
-                  className="swap-button"
-                  onClick={() => setSplitTopLanguage((current) => (current === "zh" ? "es" : "zh"))}
-                  type="button"
-                  disabled={isBusy}
-                >
-                  Cambiar
-                </button>
-              </div>
-
-              <span className="split-language-tag">{bottomCopy.splitTitle}</span>
-            </div>
-
             <SplitPane
               side="bottom"
               title={bottomCopy.splitTitle}
@@ -672,6 +623,57 @@ export default function App() {
           </section>
         )}
       </section>
+
+      <div className={`floating-settings ${settingsOpen ? "is-open" : ""}`}>
+        {settingsOpen ? (
+          <div className="floating-menu">
+            <SegmentedControl
+              value={mode}
+              options={[
+                { label: "Walkie", value: "walkie" },
+                { label: "Split", value: "split" },
+              ]}
+              onChange={(value) => {
+                setMode(value as Mode);
+                setSettingsOpen(false);
+              }}
+              ariaLabel="Modo"
+            />
+
+            <button
+              className={`voice-toggle ${speakEnabled ? "voice-toggle-on" : ""}`}
+              onClick={() => setSpeakEnabled((current) => !current)}
+              type="button"
+            >
+              Voz {speakEnabled ? "on" : "off"}
+            </button>
+
+            {mode === "split" ? (
+              <button
+                className="swap-button"
+                onClick={() => setSplitTopLanguage((current) => (current === "zh" ? "es" : "zh"))}
+                type="button"
+                disabled={isBusy}
+              >
+                Cambiar lados
+              </button>
+            ) : null}
+          </div>
+        ) : null}
+
+        <button
+          className="floating-settings-button"
+          onClick={() => setSettingsOpen((current) => !current)}
+          type="button"
+          aria-expanded={settingsOpen}
+          aria-label="Abrir ajustes"
+        >
+          <span className="floating-settings-icon" aria-hidden="true">
+            {settingsOpen ? "×" : "⌘"}
+          </span>
+          <span className="floating-settings-label">{mode === "split" ? "Split" : "Menu"}</span>
+        </button>
+      </div>
     </main>
   );
 }
@@ -683,7 +685,7 @@ function SegmentedControl({
   className,
   ariaLabel,
 }: {
-  options: Array<{ label: string; value: string }>;
+  options: Array<{ label: React.ReactNode; value: string }>;
   value: string;
   onChange: (value: string) => void;
   className?: string;
@@ -720,6 +722,7 @@ function TurnCard({
   content,
   empty,
   actionLabel,
+  actionActiveLabel,
   actionDisabled,
   isPlaying,
   onAction,
@@ -729,6 +732,7 @@ function TurnCard({
   content: string;
   empty: string;
   actionLabel?: string;
+  actionActiveLabel?: string;
   actionDisabled?: boolean;
   isPlaying?: boolean;
   onAction?: () => void;
@@ -744,7 +748,7 @@ function TurnCard({
             onClick={onAction}
             type="button"
           >
-            {isPlaying ? "Sonando" : actionLabel}
+            {isPlaying ? actionActiveLabel || "Sonando" : actionLabel}
           </button>
         ) : null}
       </div>

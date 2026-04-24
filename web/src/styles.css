@@ -4,6 +4,16 @@
   --bg: #f2e9df;
   --surface: rgba(255, 250, 246, 0.52);
   --surface-strong: rgba(255, 248, 241, 0.68);
+  --glass-tint: rgba(255, 250, 246, 0.32);
+  --glass-highlight: rgba(255, 255, 255, 0.72);
+  --glass-shadow: rgba(48, 23, 15, 0.14);
+  --glass-background: linear-gradient(145deg, rgba(255, 255, 255, 0.58), rgba(255, 246, 238, 0.28));
+  --glass-border: 1px solid rgba(255, 255, 255, 0.48);
+  --glass-blur: blur(30px) saturate(180%);
+  --liquid-shadow:
+    0 18px 50px rgba(48, 23, 15, 0.14),
+    inset 0 1px 0 rgba(255, 255, 255, 0.72),
+    inset 0 -18px 38px rgba(217, 93, 57, 0.045);
   --ink: #241615;
   --muted: #6a544d;
   --line: rgba(255, 255, 255, 0.38);
@@ -28,11 +38,11 @@ body,
 
 body {
   background:
-    radial-gradient(ellipse at 15% 0%, rgba(255, 210, 160, 0.85) 0%, transparent 45%),
-    radial-gradient(ellipse at 88% 8%, rgba(217, 93, 57, 0.22) 0%, transparent 38%),
-    radial-gradient(ellipse at 65% 55%, rgba(241, 184, 88, 0.12) 0%, transparent 35%),
-    radial-gradient(ellipse at 5% 80%, rgba(76, 140, 120, 0.22) 0%, transparent 40%),
-    radial-gradient(ellipse at 90% 90%, rgba(217, 93, 57, 0.14) 0%, transparent 35%),
+    radial-gradient(ellipse at 15% 0%, rgba(255, 224, 177, 0.78) 0%, transparent 45%),
+    radial-gradient(ellipse at 88% 8%, rgba(217, 93, 57, 0.2) 0%, transparent 38%),
+    radial-gradient(ellipse at 65% 55%, rgba(241, 184, 88, 0.14) 0%, transparent 35%),
+    radial-gradient(ellipse at 4% 82%, rgba(76, 140, 120, 0.26) 0%, transparent 42%),
+    radial-gradient(ellipse at 94% 88%, rgba(76, 140, 120, 0.13) 0%, transparent 36%),
     linear-gradient(160deg, #faf4ec 0%, #f2e9de 55%, #ede1d5 100%);
   background-attachment: fixed;
   color: var(--ink);
@@ -61,6 +71,7 @@ button {
   position: absolute;
   border-radius: 999px;
   pointer-events: none;
+  mix-blend-mode: multiply;
 }
 
 .background-orb-a {
@@ -69,7 +80,7 @@ button {
   width: 26rem;
   height: 26rem;
   background: radial-gradient(circle at 40% 40%, rgba(217, 93, 57, 0.28), rgba(241, 184, 88, 0.12) 55%, transparent 70%);
-  filter: blur(30px);
+  filter: blur(34px);
   opacity: 0.9;
   animation: floatOrb 16s ease-in-out infinite;
 }
@@ -80,7 +91,7 @@ button {
   width: 28rem;
   height: 28rem;
   background: radial-gradient(circle at 55% 55%, rgba(76, 140, 120, 0.26), rgba(76, 140, 120, 0.05) 60%, transparent 75%);
-  filter: blur(36px);
+  filter: blur(42px);
   opacity: 0.85;
   animation: floatOrbReverse 20s ease-in-out infinite;
 }
@@ -96,6 +107,17 @@ button {
   animation: floatOrb 22s ease-in-out 4s infinite;
 }
 
+.app-shell::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(115deg, rgba(255, 255, 255, 0.38), transparent 28%, transparent 64%, rgba(255, 255, 255, 0.18)),
+    radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.42), transparent 42%);
+  opacity: 0.52;
+}
+
 /* ── Layout ───────────────────────────────────────────── */
 
 .app-frame {
@@ -105,9 +127,9 @@ button {
   margin: 0 auto;
   min-height: 100vh;
   padding:
-    calc(1.1rem + env(safe-area-inset-top))
+    calc(0.9rem + env(safe-area-inset-top))
     1rem
-    calc(1.2rem + env(safe-area-inset-bottom));
+    calc(7.4rem + env(safe-area-inset-bottom));
   display: flex;
   flex-direction: column;
   gap: 0.85rem;
@@ -130,8 +152,82 @@ button {
 .turn-card,
 .split-toolbar,
 .split-pane {
-  backdrop-filter: blur(28px) saturate(160%);
-  -webkit-backdrop-filter: blur(28px) saturate(160%);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+}
+
+.topbar,
+.hero-card,
+.turn-card,
+.direction-bar,
+.split-toolbar,
+.split-pane {
+  position: relative;
+  overflow: hidden;
+  background: var(--glass-background);
+  border: var(--glass-border);
+  box-shadow: var(--liquid-shadow);
+}
+
+.topbar::before,
+.hero-card::before,
+.turn-card::before,
+.direction-bar::before,
+.split-toolbar::before,
+.split-pane::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  background:
+    linear-gradient(120deg, rgba(255, 255, 255, 0.5), transparent 30%, transparent 66%, rgba(255, 255, 255, 0.16)),
+    radial-gradient(circle at 20% 0%, rgba(255, 255, 255, 0.55), transparent 34%);
+  opacity: 0.72;
+}
+
+.topbar::after,
+.hero-card::after,
+.turn-card::after,
+.direction-bar::after,
+.split-toolbar::after,
+.split-pane::after {
+  content: "";
+  position: absolute;
+  inset: -45% -80%;
+  pointer-events: none;
+  border-radius: inherit;
+  background: linear-gradient(105deg, transparent 42%, rgba(255, 255, 255, 0.18) 49%, transparent 56%);
+  opacity: 0.7;
+  transform: translateX(-20%);
+  animation: liquidSheen 8s ease-in-out infinite;
+}
+
+.topbar > *,
+.hero-card > *,
+.turn-card > *,
+.direction-bar > *,
+.split-toolbar > *,
+.split-pane > * {
+  position: relative;
+  z-index: 1;
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .topbar,
+  .hero-card,
+  .turn-card,
+  .direction-bar,
+  .split-toolbar,
+  .split-pane,
+  .segmented-control,
+  .voice-toggle,
+  .swap-button,
+  .mini-action,
+  .status-pill,
+  .error-banner {
+    background: rgba(255, 248, 241, 0.84);
+  }
 }
 
 /* ── Topbar ───────────────────────────────────────────── */
@@ -141,10 +237,7 @@ button {
   flex-direction: column;
   gap: 0.9rem;
   padding: 0.95rem 1rem;
-  background: var(--surface);
-  border: 1px solid var(--line);
   border-radius: 1.5rem;
-  box-shadow: var(--shadow);
   animation: riseIn 500ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
@@ -184,15 +277,24 @@ button {
   gap: 0.3rem;
   padding: 0.28rem;
   border-radius: 999px;
-  background: rgba(48, 23, 15, 0.07);
+  background: rgba(255, 248, 241, 0.34);
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.62),
+    0 8px 22px rgba(48, 23, 15, 0.07);
+  backdrop-filter: blur(18px) saturate(150%);
+  -webkit-backdrop-filter: blur(18px) saturate(150%);
 }
 
 .segmented-thumb {
   position: absolute;
   inset: 0.28rem auto 0.28rem 0.28rem;
   border-radius: 999px;
-  background: linear-gradient(135deg, rgba(255, 252, 249, 0.98), rgba(252, 241, 232, 0.94));
-  box-shadow: 0 4px 12px rgba(54, 27, 17, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.9);
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.86), rgba(255, 246, 238, 0.58));
+  box-shadow:
+    0 8px 22px rgba(54, 27, 17, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.92),
+    inset 0 -12px 22px rgba(217, 93, 57, 0.045);
   transition: transform 260ms cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
@@ -217,6 +319,29 @@ button {
   transform: scale(0.96);
 }
 
+.direction-option-label {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  white-space: nowrap;
+}
+
+.direction-glyph {
+  width: 1.35rem;
+  height: 1.35rem;
+  display: inline-grid;
+  place-items: center;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.46);
+  color: var(--terracotta-deep);
+  font-size: 0.82rem;
+  line-height: 1;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.72),
+    0 4px 10px rgba(48, 23, 15, 0.06);
+}
+
 /* ── Buttons ──────────────────────────────────────────── */
 
 .voice-toggle,
@@ -224,9 +349,15 @@ button {
 .mini-action {
   min-height: 2.75rem;
   border-radius: 999px;
-  background: rgba(48, 23, 15, 0.07);
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.52), rgba(255, 246, 238, 0.3));
+  border: 1px solid rgba(255, 255, 255, 0.44);
   color: var(--ink);
   font-weight: 700;
+  box-shadow:
+    0 8px 20px rgba(48, 23, 15, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.68);
+  backdrop-filter: blur(18px) saturate(150%);
+  -webkit-backdrop-filter: blur(18px) saturate(150%);
   transition:
     transform 220ms cubic-bezier(0.34, 1.56, 0.64, 1),
     background 180ms ease,
@@ -237,7 +368,11 @@ button {
 .voice-toggle:active,
 .swap-button:active,
 .mini-action:active {
-  transform: scale(0.94);
+  transform: scale(0.97);
+  box-shadow:
+    0 4px 14px rgba(48, 23, 15, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.74),
+    inset 0 -10px 22px rgba(48, 23, 15, 0.035);
 }
 
 .voice-toggle {
@@ -253,9 +388,9 @@ button {
 }
 
 .voice-toggle-on {
-  background: rgba(76, 140, 120, 0.2);
+  background: linear-gradient(145deg, rgba(221, 240, 234, 0.7), rgba(205, 232, 224, 0.38));
   color: #1e5847;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  border-color: rgba(255, 255, 255, 0.56);
 }
 
 /* ── Panel animation ──────────────────────────────────── */
@@ -271,32 +406,30 @@ button {
   gap: 0.85rem;
 }
 
+.walkie-layout {
+  flex: 1 1 auto;
+}
+
 /* ── Direction bar ────────────────────────────────────── */
 
 .direction-bar,
 .split-toolbar {
   padding: 0.55rem 0.7rem;
   border-radius: 999px;
-  background: var(--surface);
-  border: 1px solid var(--line);
-  box-shadow: var(--shadow);
 }
 
 /* ── Hero card ────────────────────────────────────────── */
 
 .hero-card {
-  position: relative;
   padding: 1.4rem 1.4rem 1.6rem;
   border-radius: 2.2rem;
-  background: rgba(255, 247, 240, 0.5);
-  border: 1px solid rgba(255, 255, 255, 0.5);
-  box-shadow:
-    0 12px 48px rgba(48, 23, 15, 0.1),
-    inset 0 1px 0 rgba(255, 255, 255, 0.7),
-    inset 0 -1px 0 rgba(217, 93, 57, 0.06);
 }
 
-.hero-card::before {
+.walkie-layout .hero-card {
+  margin-top: auto;
+}
+
+.hero-card .hero-copy::before {
   content: "";
   position: absolute;
   inset: -40% auto auto -20%;
@@ -307,7 +440,7 @@ button {
   animation: heroGlow 10s ease-in-out infinite;
 }
 
-.hero-card::after {
+.hero-card .hero-copy::after {
   content: "";
   position: absolute;
   inset: auto -15% -30% auto;
@@ -330,7 +463,7 @@ button {
 .hero-copy h2 {
   font-size: clamp(1.7rem, 7vw, 2.5rem);
   line-height: 0.95;
-  letter-spacing: -0.02em;
+  letter-spacing: 0;
 }
 
 .hero-copy p,
@@ -348,9 +481,13 @@ button {
   border-radius: 999px;
   font-size: 0.8rem;
   font-weight: 700;
-  background: rgba(48, 23, 15, 0.07);
+  background: rgba(255, 248, 241, 0.42);
+  border: 1px solid rgba(255, 255, 255, 0.42);
   color: var(--muted);
   letter-spacing: 0.02em;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(16px) saturate(150%);
+  -webkit-backdrop-filter: blur(16px) saturate(150%);
 }
 
 .status-recording {
@@ -387,6 +524,10 @@ button {
   border-radius: 1.6rem;
   background: transparent;
   transition: transform 200ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.record-button::before {
+  content: none;
 }
 
 .record-button:disabled {
@@ -484,10 +625,6 @@ button {
   padding: 1rem 1rem 1.1rem;
   border-radius: 1.8rem;
   border: 1px solid var(--line);
-  background: var(--surface-strong);
-  box-shadow:
-    0 4px 20px rgba(48, 23, 15, 0.07),
-    inset 0 1px 0 rgba(255, 255, 255, 0.6);
   transform: translateY(0);
   transition:
     transform 280ms cubic-bezier(0.34, 1.56, 0.64, 1),
@@ -529,8 +666,9 @@ button {
 }
 
 .mini-action.is-playing {
-  background: rgba(76, 140, 120, 0.18);
+  background: linear-gradient(145deg, rgba(221, 240, 234, 0.76), rgba(205, 232, 224, 0.44));
   color: #1e5847;
+  animation: audioReadyPop 900ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
 }
 
 /* ── Split toolbar ────────────────────────────────────── */
@@ -600,11 +738,6 @@ button {
   min-height: 0;
   padding: 0.9rem;
   border-radius: 2rem;
-  background: var(--surface);
-  border: 1px solid var(--line);
-  box-shadow:
-    0 6px 28px rgba(48, 23, 15, 0.08),
-    inset 0 1px 0 rgba(255, 255, 255, 0.6);
   transition:
     transform 280ms cubic-bezier(0.34, 1.56, 0.64, 1),
     border-color 220ms ease,
@@ -616,17 +749,19 @@ button {
   transform: translateY(-3px);
   border-color: rgba(217, 93, 57, 0.3);
   box-shadow:
-    0 12px 40px rgba(48, 23, 15, 0.12),
+    0 20px 58px rgba(48, 23, 15, 0.16),
     0 0 0 1px rgba(217, 93, 57, 0.15),
-    inset 0 1px 0 rgba(255, 255, 255, 0.6);
+    inset 0 1px 0 rgba(255, 255, 255, 0.76),
+    inset 0 -18px 38px rgba(217, 93, 57, 0.06);
 }
 
 .split-pane-inner {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  gap: 0.75rem;
+  gap: 0.65rem;
   min-height: 100%;
+  padding: 1.55rem 0.05rem;
   overflow: hidden;
 }
 
@@ -652,7 +787,7 @@ button {
   display: flex;
   flex-direction: column;
   justify-content: center;
-  gap: 0.75rem;
+  gap: 0.65rem;
   min-height: 0;
   padding: 0.2rem 0;
 }
@@ -661,7 +796,7 @@ button {
   margin: 0;
   font-size: clamp(1.5rem, 5vw, 2.4rem);
   line-height: 1.05;
-  letter-spacing: -0.03em;
+  letter-spacing: 0;
 }
 
 .split-primary.is-empty {
@@ -698,11 +833,12 @@ button {
   align-items: center;
   justify-content: center;
   gap: 0.6rem;
+  padding: 0.95rem 0;
 }
 
 .split-record-button {
-  width: 5.8rem;
-  min-height: 5.8rem;
+  width: 6.8rem;
+  min-height: 6.8rem;
   flex: 0 0 auto;
   border-radius: 999px;
 }
@@ -737,11 +873,85 @@ button {
   line-height: 1.3;
 }
 
+/* ── Floating settings ────────────────────────────────── */
+
+.floating-settings {
+  position: fixed;
+  right: calc(0.65rem + env(safe-area-inset-right));
+  bottom: calc(0.65rem + env(safe-area-inset-bottom));
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.75rem;
+}
+
+.floating-menu {
+  width: min(calc(100vw - 2rem), 19rem);
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  border-radius: 1.5rem;
+  background: var(--glass-background);
+  border: var(--glass-border);
+  box-shadow: var(--liquid-shadow);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  animation: floatingMenuIn 220ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+.floating-menu .voice-toggle {
+  align-self: stretch;
+}
+
+.floating-settings-button {
+  width: 4.35rem;
+  min-height: 5.8rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.18rem;
+  border-radius: 999px;
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.68), rgba(255, 246, 238, 0.42));
+  border: 1px solid rgba(255, 255, 255, 0.56);
+  color: var(--ink);
+  font-weight: 800;
+  box-shadow:
+    0 16px 34px rgba(48, 23, 15, 0.14),
+    inset 0 1px 0 rgba(255, 255, 255, 0.82);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  transition:
+    transform 180ms cubic-bezier(0.34, 1.56, 0.64, 1),
+    box-shadow 180ms ease;
+}
+
+.floating-settings-button:active {
+  transform: scale(0.94);
+}
+
+.floating-settings-icon {
+  display: block;
+  color: var(--terracotta-deep);
+  font-size: 2rem;
+  line-height: 1;
+}
+
+.floating-settings-label {
+  color: var(--muted);
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
 /* ── Responsive ───────────────────────────────────────── */
 
 @media (max-width: 719px) {
   .app-frame {
-    padding-bottom: calc(0.9rem + env(safe-area-inset-bottom));
+    padding-bottom: calc(7.4rem + env(safe-area-inset-bottom));
   }
 
   .app-frame-split {
@@ -800,8 +1010,8 @@ button {
   }
 
   .split-record-button {
-    width: 4.95rem;
-    min-height: 4.95rem;
+    width: 6.1rem;
+    min-height: 6.1rem;
   }
 
   .split-record-button .record-button-core {
@@ -817,11 +1027,11 @@ button {
   }
 
   .split-stage {
-    gap: 0.55rem;
+    gap: 0.45rem;
   }
 
   .split-primary {
-    font-size: clamp(1.25rem, 6vw, 1.9rem);
+    font-size: clamp(1.15rem, 5.5vw, 1.72rem);
   }
 
   .split-secondary p {
@@ -839,11 +1049,16 @@ button {
   margin: 0;
   padding: 0.85rem 0.95rem;
   border-radius: 1rem;
-  background: rgba(164, 61, 40, 0.1);
-  border: 1px solid rgba(164, 61, 40, 0.15);
+  background: linear-gradient(145deg, rgba(247, 221, 217, 0.62), rgba(255, 246, 238, 0.34));
+  border: 1px solid rgba(255, 255, 255, 0.42);
   color: #81291b;
   font-size: 0.92rem;
   line-height: 1.4;
+  box-shadow:
+    0 10px 28px rgba(48, 23, 15, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.68);
+  backdrop-filter: blur(18px) saturate(150%);
+  -webkit-backdrop-filter: blur(18px) saturate(150%);
 }
 
 /* ── Animations ───────────────────────────────────────── */
@@ -911,6 +1126,37 @@ button {
 @keyframes pulseGlow {
   0%, 100% { transform: scale(1); opacity: 1; }
   50% { transform: scale(1.04); opacity: 0.85; }
+}
+
+@keyframes liquidSheen {
+  0%, 12% {
+    transform: translateX(-20%);
+    opacity: 0;
+  }
+  36% {
+    opacity: 0.7;
+  }
+  62%, 100% {
+    transform: translateX(20%);
+    opacity: 0;
+  }
+}
+
+@keyframes audioReadyPop {
+  0% { transform: scale(1); }
+  45% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+@keyframes floatingMenuIn {
+  from {
+    opacity: 0;
+    transform: translateY(0.7rem) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 @keyframes idlePulse {

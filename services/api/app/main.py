@@ -57,6 +57,9 @@ STT_URL = os.getenv("STT_URL", "http://stt:9001")
 TTS_URL = os.getenv("TTS_URL", "http://tts:9002")
 GEMINI_BASE_URL = os.getenv("GEMINI_BASE_URL", "https://generativelanguage.googleapis.com/v1beta")
 GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
+LLM_PROVIDER = os.getenv("LLM_PROVIDER", "deepseek").strip().lower()
+DEEPSEEK_BASE_URL = os.getenv("DEEPSEEK_BASE_URL", "https://api.deepseek.com")
+DEEPSEEK_MODEL = os.getenv("DEEPSEEK_MODEL", "deepseek-v4-flash")
 
 # OpenRouter / Moonshot fallback if you want to restore them later.
 # OPENROUTER_BASE_URL = os.getenv("OPENROUTER_BASE_URL", "https://openrouter.ai/api/v1")
@@ -201,6 +204,71 @@ def build_direct_audio_prompt(direction: Direction) -> str:
 
 
 def translate_text(text: str, direction: Direction) -> str:
+    if LLM_PROVIDER == "deepseek":
+        return translate_text_deepseek(text, direction)
+    if LLM_PROVIDER == "gemini":
+        return translate_text_gemini(text, direction)
+    raise HTTPException(status_code=500, detail=f"Unsupported LLM_PROVIDER '{LLM_PROVIDER}'")
+
+
+def translate_text_deepseek(text: str, direction: Direction) -> str:
+    api_key = os.getenv("DEEPSEEK_API_KEY")
+    if not api_key:
+        raise HTTPException(status_code=500, detail="DEEPSEEK_API_KEY is not configured")
+
+    started_at = time.perf_counter()
+    request_body = {
+        "model": DEEPSEEK_MODEL,
+        "messages": [
+            {
+                "role": "system",
+                "content": build_system_prompt(direction),
+            },
+            {
+                "role": "user",
+                "content": text.strip(),
+            },
+        ],
+        "thinking": {"type": "disabled"},
+        "temperature": 0,
+        "max_tokens": 160,
+    }
+
+    endpoint = f"{DEEPSEEK_BASE_URL.rstrip('/')}/chat/completions"
+
+    with httpx.Client(timeout=8) as client:
+        response = client.post(
+            endpoint,
+            headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
+            json=request_body,
+        )
+
+    if response.status_code >= 400:
+        raise HTTPException(status_code=502, detail=f"DeepSeek API failed: {response.text}")
+
+    payload = response.json()
+    choices = payload.get("choices") or []
+    if not choices:
+        raise HTTPException(status_code=502, detail="DeepSeek API returned no choices")
+
+    message = choices[0].get("message") or {}
+    content = (message.get("content") or "").strip()
+    if not content:
+        raise HTTPException(status_code=502, detail="DeepSeek API returned an empty translation")
+
+    logger.info(
+        "Translated direction=%s chars=%s provider=deepseek model=%s elapsed=%.2fs source=%r translated=%r",
+        direction,
+        len(text.strip()),
+        DEEPSEEK_MODEL,
+        time.perf_counter() - started_at,
+        text.strip(),
+        content,
+    )
+    return content
+
+
+def translate_text_gemini(text: str, direction: Direction) -> str:
     api_key = os.getenv("GEMINI_API_KEY")
     if not api_key:
         raise HTTPException(status_code=500, detail="GEMINI_API_KEY is not configured")
@@ -246,7 +314,7 @@ def translate_text(text: str, direction: Direction) -> str:
         raise HTTPException(status_code=502, detail="Gemini API returned an empty translation")
 
     logger.info(
-        "Translated direction=%s chars=%s model=%s elapsed=%.2fs source=%r translated=%r",
+        "Translated direction=%s chars=%s provider=gemini model=%s elapsed=%.2fs source=%r translated=%r",
         direction,
         len(text.strip()),
         GEMINI_MODEL,
