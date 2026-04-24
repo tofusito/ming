@@ -51,6 +51,7 @@ type DirectionCopy = {
   translationEmpty: string;
   recordLabelIdle: string;
   recordLabelRecording: string;
+  recordLabelProcessing: string;
   playLabel: string;
   playingLabel: string;
   splitTitle: string;
@@ -91,7 +92,8 @@ function directionCopy(direction: Direction): DirectionCopy {
       translationLabel: "翻译成西班牙语",
       translationEmpty: "这里会显示西班牙语翻译。",
       recordLabelIdle: "说话",
-      recordLabelRecording: "停止",
+      recordLabelRecording: "在听",
+      recordLabelProcessing: "翻译中",
       playLabel: "播放",
       playingLabel: "播放中",
       splitTitle: "中文",
@@ -114,7 +116,8 @@ function directionCopy(direction: Direction): DirectionCopy {
     translationLabel: "Traducido al chino",
     translationEmpty: "Aquí aparecerá la traducción final en chino.",
     recordLabelIdle: "Hablar",
-    recordLabelRecording: "Parar",
+    recordLabelRecording: "Escucha",
+    recordLabelProcessing: "Traduciendo",
     playLabel: "Reproducir",
     playingLabel: "Sonando",
     splitTitle: "Español",
@@ -571,24 +574,19 @@ export default function App() {
               {panels.walkie.error ? (
                 <p className="error-banner walkie-error">{panels.walkie.error}</p>
               ) : null}
-              <span className={`status-pill status-${panels.walkie.phase} walkie-status-pill`}>
-                {statusLabel(panels.walkie.phase, walkieCopy)}
-              </span>
               <button
-                className={`record-button walkie-record-button ${panels.walkie.phase === "recording" ? "is-recording" : ""} ${
-                  panels.walkie.phase === "processing" ? "is-processing" : ""
-                }`}
+                className={`record-button walkie-record-button is-${panels.walkie.phase}`}
                 onClick={handleWalkieToggle}
-                disabled={isBusy && activeKey !== "walkie"}
+                disabled={isBusy && activeKey !== "walkie" && panels.walkie.phase !== "processing"}
                 type="button"
               >
                 <span className="record-button-core">
                   {panels.walkie.phase === "recording"
                     ? walkieCopy.recordLabelRecording
-                    : walkieCopy.recordLabelIdle}
+                    : panels.walkie.phase === "processing"
+                      ? walkieCopy.recordLabelProcessing
+                      : walkieCopy.recordLabelIdle}
                 </span>
-                <span className="record-ring record-ring-a" />
-                <span className="record-ring record-ring-b" />
               </button>
             </div>
           </section>
