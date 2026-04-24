@@ -571,7 +571,7 @@ export default function App() {
               {panels.walkie.error ? (
                 <p className="error-banner walkie-error">{panels.walkie.error}</p>
               ) : null}
-              <span className={`status-pill status-${panels.walkie.phase}`}>
+              <span className={`status-pill status-${panels.walkie.phase} walkie-status-pill`}>
                 {statusLabel(panels.walkie.phase, walkieCopy)}
               </span>
               <button
