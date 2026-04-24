@@ -544,24 +544,27 @@ export default function App() {
               />
             </div>
 
-            <section className="card-stack">
-              <TurnCard
-                accent="terracotta"
-                label={walkieCopy.transcriptLabel}
-                content={panels.walkie.transcript}
-                empty={walkieCopy.transcriptEmpty}
-              />
-              <TurnCard
-                accent="gold"
-                label={walkieCopy.translationLabel}
-                content={panels.walkie.translation}
-                empty={walkieCopy.translationEmpty}
-                actionLabel={walkieCopy.playLabel}
-                actionActiveLabel={walkieCopy.playingLabel}
-                actionDisabled={!panels.walkie.audioUrl}
-                isPlaying={playingKey === "walkie"}
-                onAction={() => void playAudio("walkie")}
-              />
+            <section className="walkie-card">
+              <div className="walkie-section walkie-section-top">
+                <span className="walkie-section-label">{walkieCopy.transcriptLabel}</span>
+                <p className="walkie-section-text">{panels.walkie.transcript || walkieCopy.transcriptEmpty}</p>
+              </div>
+              <div className="walkie-divider" />
+              <div className="walkie-section walkie-section-bottom">
+                <div className="walkie-section-header">
+                  <span className="walkie-section-label">{walkieCopy.translationLabel}</span>
+                  {panels.walkie.audioUrl ? (
+                    <button
+                      className={`mini-action ${playingKey === "walkie" ? "is-playing" : ""}`}
+                      onClick={() => void playAudio("walkie")}
+                      type="button"
+                    >
+                      {playingKey === "walkie" ? walkieCopy.playingLabel : walkieCopy.playLabel}
+                    </button>
+                  ) : null}
+                </div>
+                <p className="walkie-section-text">{panels.walkie.translation || walkieCopy.translationEmpty}</p>
+              </div>
             </section>
 
             <div className="walkie-action-bar">

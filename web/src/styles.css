@@ -157,6 +157,7 @@ button {
 .topbar,
 .hero-card,
 .turn-card,
+.walkie-card,
 .split-toolbar,
 .split-pane {
   backdrop-filter: var(--glass-blur);
@@ -166,6 +167,7 @@ button {
 .topbar,
 .hero-card,
 .turn-card,
+.walkie-card,
 .direction-bar,
 .split-toolbar,
 .split-pane {
@@ -179,6 +181,7 @@ button {
 .topbar::before,
 .hero-card::before,
 .turn-card::before,
+.walkie-card::before,
 .direction-bar::before,
 .split-toolbar::before,
 .split-pane::before {
@@ -196,6 +199,7 @@ button {
 .topbar::after,
 .hero-card::after,
 .turn-card::after,
+.walkie-card::after,
 .direction-bar::after,
 .split-toolbar::after,
 .split-pane::after {
@@ -213,6 +217,7 @@ button {
 .topbar > *,
 .hero-card > *,
 .turn-card > *,
+.walkie-card > *,
 .direction-bar > *,
 .split-toolbar > *,
 .split-pane > * {
@@ -630,6 +635,64 @@ button {
   min-height: 0;
 }
 
+/* ── Walkie unified card ──────────────────────────────── */
+
+.walkie-card {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  border-radius: 2rem;
+  overflow: hidden;
+  background: var(--glass-background);
+  border: var(--glass-border);
+  box-shadow: var(--liquid-shadow);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+}
+
+.walkie-section {
+  flex: 1 1 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding: 1.1rem 1.2rem;
+  overflow: hidden;
+}
+
+.walkie-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.walkie-section-label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
+
+.walkie-section-text {
+  margin: 0;
+  font-size: 1.08rem;
+  line-height: 1.48;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.walkie-divider {
+  flex: 0 0 1px;
+  background: var(--line);
+  margin: 0 1.2rem;
+}
+
 .turn-card {
   display: flex;
   flex-direction: column;
@@ -696,14 +759,7 @@ button {
   flex-direction: column;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.7rem 1rem 0.6rem;
-  margin: 0 -0.15rem;
-  border-radius: 2rem;
-  background: var(--glass-background);
-  border: var(--glass-border);
-  box-shadow: var(--liquid-shadow);
-  backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
+  padding: 0.4rem 0 0.3rem;
 }
 
 .walkie-record-button {
