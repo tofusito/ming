@@ -580,13 +580,10 @@ export default function App() {
                 disabled={isBusy && activeKey !== "walkie" && panels.walkie.phase !== "processing"}
                 type="button"
               >
-                <span className="record-button-core">
-                  {panels.walkie.phase === "recording"
-                    ? walkieCopy.recordLabelRecording
-                    : panels.walkie.phase === "processing"
-                      ? walkieCopy.recordLabelProcessing
-                      : walkieCopy.recordLabelIdle}
-                </span>
+                <svg className="record-blob" viewBox="0 0 100 100" aria-hidden="true" focusable="false">
+                  <path d="M 75.9 39.3 Q 98 50 75.9 60.7 Q 83.9 83.9 60.7 75.9 Q 50 98 39.3 75.9 Q 16.1 83.9 24.1 60.7 Q 2 50 24.1 39.3 Q 16.1 16.1 39.3 24.1 Q 50 2 60.7 24.1 Q 83.9 16.1 75.9 39.3 Z" />
+                </svg>
+                <span className="record-button-core" />
               </button>
             </div>
           </section>
@@ -793,7 +790,6 @@ function SplitPane({
             <span className="eyebrow">{title}</span>
             <h2>{isSourcePane ? copy.splitSubtitle : primaryLabel}</h2>
           </div>
-          <span className={`status-pill status-${panel.phase}`}>{statusLabel(panel.phase, copy)}</span>
         </div>
 
         <div className="split-stage">
@@ -808,28 +804,25 @@ function SplitPane({
         </div>
 
         <div className="split-action-row">
+          {panel.audioUrl ? (
+            <button
+              className={`mini-action split-play-action ${isPlaying ? "is-playing" : ""}`}
+              onClick={onPlay}
+              type="button"
+            >
+              {isPlaying ? copy.playingLabel : copy.playLabel}
+            </button>
+          ) : null}
           <button
-            className={`record-button split-record-button ${panel.phase === "recording" ? "is-recording" : ""} ${
-              panel.phase === "processing" ? "is-processing" : ""
-            }`}
+            className={`record-button split-record-button is-${panel.phase}`}
             onClick={onRecord}
             disabled={isBusy}
             type="button"
           >
-            <span className="record-button-core">
-              {panel.phase === "recording" ? copy.recordLabelRecording : copy.recordLabelIdle}
-            </span>
-            <span className="record-ring record-ring-a" />
-            <span className="record-ring record-ring-b" />
-          </button>
-
-          <button
-            className={`mini-action split-play-action ${isPlaying ? "is-playing" : ""}`}
-            disabled={!panel.audioUrl}
-            onClick={onPlay}
-            type="button"
-          >
-            {isPlaying ? copy.playingLabel : copy.playLabel}
+            <svg className="record-blob" viewBox="0 0 100 100" aria-hidden="true" focusable="false">
+              <path d="M 75.9 39.3 Q 98 50 75.9 60.7 Q 83.9 83.9 60.7 75.9 Q 50 98 39.3 75.9 Q 16.1 83.9 24.1 60.7 Q 2 50 24.1 39.3 Q 16.1 16.1 39.3 24.1 Q 50 2 60.7 24.1 Q 83.9 16.1 75.9 39.3 Z" />
+            </svg>
+            <span className="record-button-core" />
           </button>
         </div>
 
