@@ -935,12 +935,12 @@ button {
 }
 
 .split-pane-inner {
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
+  position: relative;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
   gap: 0.65rem;
   min-height: 100%;
-  padding: 1.55rem 0.05rem;
+  padding: 1rem 0.05rem 8.4rem;
   overflow: hidden;
 }
 
@@ -962,13 +962,13 @@ button {
 }
 
 .split-stage {
-  flex: 1 1 auto;
   display: flex;
   flex-direction: column;
   justify-content: center;
   gap: 0.65rem;
   min-height: 0;
-  padding: 0.2rem 0;
+  padding: 0.2rem 0 0;
+  overflow: hidden;
 }
 
 .split-primary {
@@ -1008,12 +1008,22 @@ button {
 }
 
 .split-action-row {
+  position: absolute;
+  right: 0;
+  bottom: 0.15rem;
+  left: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 0.55rem;
-  padding: 0.8rem 0;
+  min-height: 8rem;
+  padding: 0;
+  pointer-events: none;
+}
+
+.split-action-row > * {
+  pointer-events: auto;
 }
 
 .split-record-button {
@@ -1243,6 +1253,10 @@ button {
     padding: 0.65rem;
   }
 
+  .split-pane-inner {
+    padding: 0.8rem 0.05rem 7.45rem;
+  }
+
   .split-pane-header h2 {
     font-size: 0.96rem;
   }
@@ -1312,6 +1326,7 @@ button {
 
   .split-action-row {
     gap: 0.4rem;
+    min-height: 7.15rem;
   }
 }
 
