@@ -58,30 +58,6 @@ type DirectionCopy = {
   splitSubtitle: string;
 };
 
-function directionLabel(direction: Direction): string {
-  return direction === "zh_to_es" ? "中文 a Español" : "Español a 中文";
-}
-
-function DirectionOptionLabel({ direction }: { direction: Direction }) {
-  const source = direction === "zh_to_es" ? "中文" : "Español";
-  const target = direction === "zh_to_es" ? "Español" : "中文";
-
-  return (
-    <span className="direction-option-label">
-      <span>{source}</span>
-      <span className="direction-glyph" aria-hidden="true">⇄</span>
-      <span>{target}</span>
-    </span>
-  );
-}
-
-function languageNameFor(code: "source" | "target", direction: Direction): string {
-  if (code === "source") {
-    return direction === "zh_to_es" ? "中文" : "Español";
-  }
-  return direction === "zh_to_es" ? "Español" : "中文";
-}
-
 function walkieTranscriptLabel(direction: Direction): string {
   return "Transcripción · 转录";
 }
@@ -96,6 +72,14 @@ function walkieTranscriptEmpty(direction: Direction): string {
 
 function walkieTranslationEmpty(direction: Direction): string {
   return "Aquí aparecerá el texto traducido.\n这里会显示翻译文本。";
+}
+
+function splitGenericTranscriptLabel(direction: Direction): string {
+  return direction === "zh_to_es" ? "转录" : "Transcripción";
+}
+
+function splitGenericTranslationLabel(direction: Direction): string {
+  return direction === "zh_to_es" ? "Traducción" : "翻译";
 }
 
 function directionCopy(direction: Direction): DirectionCopy {
@@ -653,6 +637,7 @@ export default function App() {
               side="top"
               title={topCopy.splitTitle}
               direction={topDirection}
+              sourceDirection={lastSplitSource === "bottom" ? bottomDirection : topDirection}
               panel={panels.top}
               lastSource={lastSplitSource}
               isActive={activeKey === "top"}
@@ -666,6 +651,7 @@ export default function App() {
               side="bottom"
               title={bottomCopy.splitTitle}
               direction={bottomDirection}
+              sourceDirection={lastSplitSource === "top" ? topDirection : bottomDirection}
               panel={panels.bottom}
               lastSource={lastSplitSource}
               isActive={activeKey === "bottom"}
@@ -693,19 +679,6 @@ export default function App() {
               }}
               ariaLabel="Modo"
             />
-
-            {mode === "walkie" ? (
-              <SegmentedControl
-                value={walkieDirection}
-                options={[
-                  { label: <DirectionOptionLabel direction="zh_to_es" />, value: "zh_to_es" },
-                  { label: <DirectionOptionLabel direction="es_to_zh" />, value: "es_to_zh" },
-                ]}
-                onChange={(value) => setWalkieDirection(value as Direction)}
-                className="direction-control-compact"
-                ariaLabel="Dirección"
-              />
-            ) : null}
 
             <button
               className={`voice-toggle ${speakEnabled ? "voice-toggle-on" : ""}`}
@@ -828,6 +801,7 @@ function SplitPane({
   side,
   title,
   direction,
+  sourceDirection,
   panel,
   lastSource,
   isActive,
@@ -839,6 +813,7 @@ function SplitPane({
   side: Side;
   title: string;
   direction: Direction;
+  sourceDirection: Direction;
   panel: PanelState;
   lastSource: Side | null;
   isActive: boolean;
@@ -848,11 +823,12 @@ function SplitPane({
   onPlay: () => void;
 }) {
   const copy = directionCopy(direction);
-  const isSourcePane = lastSource === side;
-  const primaryLabel = isSourcePane ? copy.transcriptLabel : copy.translationLabel;
+  const sourceCopy = directionCopy(sourceDirection);
+  const isSourcePane = lastSource === null || lastSource === side;
+  const primaryLabel = isSourcePane ? splitGenericTranscriptLabel(direction) : splitGenericTranslationLabel(sourceDirection);
   const primaryText = isSourcePane ? panel.transcript : panel.translation;
-  const primaryEmpty = isSourcePane ? copy.transcriptEmpty : copy.translationEmpty;
-  const secondaryLabel = isSourcePane ? copy.translationLabel : copy.transcriptLabel;
+  const primaryEmpty = isSourcePane ? copy.transcriptEmpty : sourceCopy.translationEmpty;
+  const secondaryLabel = isSourcePane ? sourceCopy.translationLabel : sourceCopy.transcriptLabel;
   const secondaryText = isSourcePane ? panel.translation : panel.transcript;
 
   return (
@@ -861,7 +837,7 @@ function SplitPane({
         <div className="split-pane-header">
           <div>
             <span className="eyebrow">{title}</span>
-            <h2>{isSourcePane ? copy.splitSubtitle : primaryLabel}</h2>
+            <h2>{primaryLabel}</h2>
           </div>
         </div>
 
