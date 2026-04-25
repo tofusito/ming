@@ -75,6 +75,31 @@ function DirectionOptionLabel({ direction }: { direction: Direction }) {
   );
 }
 
+function languageNameFor(code: "source" | "target", direction: Direction): string {
+  if (code === "source") {
+    return direction === "zh_to_es" ? "中文" : "Español";
+  }
+  return direction === "zh_to_es" ? "Español" : "中文";
+}
+
+function walkieTranscriptLabel(direction: Direction): string {
+  return `Transcripción · ${languageNameFor("source", direction)} (转录)`;
+}
+
+function walkieTranslationLabel(direction: Direction): string {
+  return `Traducción · ${languageNameFor("target", direction)} (翻译)`;
+}
+
+function walkieTranscriptEmpty(direction: Direction): string {
+  const sourceLanguage = languageNameFor("source", direction);
+  return `Aquí aparecerá el texto transcrito en ${sourceLanguage}. 这里会显示转录文本。`;
+}
+
+function walkieTranslationEmpty(direction: Direction): string {
+  const targetLanguage = languageNameFor("target", direction);
+  return `Aquí aparecerá el texto traducido en ${targetLanguage}. 这里会显示翻译文本。`;
+}
+
 function directionCopy(direction: Direction): DirectionCopy {
   if (direction === "zh_to_es") {
     return {
@@ -123,6 +148,32 @@ function directionCopy(direction: Direction): DirectionCopy {
     splitTitle: "Español",
     splitSubtitle: "Habla en español",
   };
+}
+
+function floatingModeLabel(mode: Mode): string {
+  return mode === "walkie" ? "Diálogo" : "Walkie";
+}
+
+function floatingModeIcon(mode: Mode) {
+  if (mode === "walkie") {
+    return (
+      <svg className="floating-mode-svg" viewBox="0 0 28 28" aria-hidden="true" focusable="false">
+        <path d="M7 8.2c0-2 1.7-3.7 3.8-3.7h6.4c2.1 0 3.8 1.7 3.8 3.7v4.9c0 2-1.7 3.7-3.8 3.7h-4.1l-4.9 4.1v-4.1h-.3C5.7 16.8 4 15.1 4 13.1V8.2Z" />
+        <path d="M14.8 19.1h3.4l3.8 3.2v-3.2h.3c1.6 0 2.9-1.2 2.9-2.8v-3.6c0-1.2-.8-2.3-1.9-2.7" />
+      </svg>
+    );
+  }
+
+  return (
+    <svg className="floating-mode-svg" viewBox="0 0 28 28" aria-hidden="true" focusable="false">
+      <path d="M9.2 4.8h4.1c1.4 0 2.5 1.1 2.5 2.5v8.1c0 1.4-1.1 2.5-2.5 2.5H9.2c-1.4 0-2.5-1.1-2.5-2.5V7.3c0-1.4 1.1-2.5 2.5-2.5Z" />
+      <path d="M10.3 7.3h2.1" />
+      <path d="M11.3 18v4.1" />
+      <path d="M7.9 22.1h6.7" />
+      <path d="M19 8.1c1.5 1.4 2.3 3.4 2.3 5.6s-.8 4.2-2.3 5.6" />
+      <path d="M22.2 5.4c2.1 2.1 3.3 5 3.3 8.3s-1.2 6.2-3.3 8.3" />
+    </svg>
+  );
 }
 
 function statusLabel(phase: PanelPhase, copy: DirectionCopy): string {
@@ -536,26 +587,10 @@ export default function App() {
       <section className={`app-frame ${mode === "split" ? "app-frame-split" : ""}`}>
         {mode === "walkie" ? (
           <section className="walkie-layout panel-enter">
-            <div className="direction-bar">
-              <SegmentedControl
-                value={walkieDirection}
-                options={[
-                  { label: <DirectionOptionLabel direction="zh_to_es" />, value: "zh_to_es" },
-                  { label: <DirectionOptionLabel direction="es_to_zh" />, value: "es_to_zh" },
-                ]}
-                onChange={(value) => setWalkieDirection(value as Direction)}
-              />
-            </div>
-
             <section className="walkie-card">
-              <div className="walkie-section walkie-section-top">
-                <span className="walkie-section-label">{walkieCopy.transcriptLabel}</span>
-                <p className="walkie-section-text">{panels.walkie.transcript || walkieCopy.transcriptEmpty}</p>
-              </div>
-              <div className="walkie-divider" />
-              <div className="walkie-section walkie-section-bottom">
+              <div className="walkie-section walkie-section-translation">
                 <div className="walkie-section-header">
-                  <span className="walkie-section-label">{walkieCopy.translationLabel}</span>
+                  <span className="walkie-section-label">{walkieTranslationLabel(walkieDirection)}</span>
                   {panels.walkie.audioUrl ? (
                     <button
                       className={`mini-action ${playingKey === "walkie" ? "is-playing" : ""}`}
@@ -566,7 +601,12 @@ export default function App() {
                     </button>
                   ) : null}
                 </div>
-                <p className="walkie-section-text">{panels.walkie.translation || walkieCopy.translationEmpty}</p>
+                <p className="walkie-section-text">{panels.walkie.translation || walkieTranslationEmpty(walkieDirection)}</p>
+              </div>
+              <div className="walkie-divider" />
+              <div className="walkie-section walkie-section-transcript">
+                <span className="walkie-section-label">{walkieTranscriptLabel(walkieDirection)}</span>
+                <p className="walkie-section-text">{panels.walkie.transcript || walkieTranscriptEmpty(walkieDirection)}</p>
               </div>
             </section>
 
@@ -634,6 +674,18 @@ export default function App() {
               ariaLabel="Modo"
             />
 
+            {mode === "walkie" ? (
+              <SegmentedControl
+                value={walkieDirection}
+                options={[
+                  { label: <DirectionOptionLabel direction="zh_to_es" />, value: "zh_to_es" },
+                  { label: <DirectionOptionLabel direction="es_to_zh" />, value: "es_to_zh" },
+                ]}
+                onChange={(value) => setWalkieDirection(value as Direction)}
+                ariaLabel="Dirección"
+              />
+            ) : null}
+
             <button
               className={`voice-toggle ${speakEnabled ? "voice-toggle-on" : ""}`}
               onClick={() => setSpeakEnabled((current) => !current)}
@@ -663,9 +715,9 @@ export default function App() {
           aria-label="Abrir ajustes"
         >
           <span className="floating-settings-icon" aria-hidden="true">
-            {settingsOpen ? "×" : "⌘"}
+            {settingsOpen ? "×" : floatingModeIcon(mode)}
           </span>
-          <span className="floating-settings-label">{mode === "split" ? "Split" : "Menu"}</span>
+          <span className="floating-settings-label">{settingsOpen ? "Cerrar" : floatingModeLabel(mode)}</span>
         </button>
       </div>
     </main>

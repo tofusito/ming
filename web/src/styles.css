@@ -1146,11 +1146,23 @@ button {
 }
 
 .floating-settings-icon {
-  display: block;
+  display: grid;
+  place-items: center;
   color: var(--terracotta-deep);
   font-size: 2.15rem;
   line-height: 1;
   filter: drop-shadow(0 4px 8px rgba(164, 61, 40, 0.16));
+}
+
+.floating-mode-svg {
+  width: 2.05rem;
+  height: 2.05rem;
+  display: block;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 .floating-settings-label {
