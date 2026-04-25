@@ -613,10 +613,6 @@ export default function App() {
               {panels.walkie.error ? (
                 <p className="error-banner walkie-error">{panels.walkie.error}</p>
               ) : null}
-              <div className="walkie-action-copy">
-                <span>{walkieDirection === "zh_to_es" ? "中文 → Español" : "Español → 中文"}</span>
-                <p>{walkieHint}</p>
-              </div>
               <button
                 className={`record-button walkie-record-button is-${panels.walkie.phase}`}
                 onClick={handleWalkieToggle}
