@@ -637,12 +637,13 @@ export default function App() {
                 className={`record-button walkie-record-button is-${panels.walkie.phase}`}
                 onClick={handleWalkieToggle}
                 disabled={isBusy && activeKey !== "walkie" && panels.walkie.phase !== "processing"}
+                aria-label={recordLabel(panels.walkie.phase, walkieCopy)}
                 type="button"
               >
                 <svg className="record-blob" viewBox="0 0 100 100" aria-hidden="true" focusable="false">
                   <path d="M 75.9 39.3 Q 98 50 75.9 60.7 Q 83.9 83.9 60.7 75.9 Q 50 98 39.3 75.9 Q 16.1 83.9 24.1 60.7 Q 2 50 24.1 39.3 Q 16.1 16.1 39.3 24.1 Q 50 2 60.7 24.1 Q 83.9 16.1 75.9 39.3 Z" />
                 </svg>
-                <span className="record-button-core">{recordLabel(panels.walkie.phase, walkieCopy)}</span>
+                <span className="record-button-core" aria-hidden="true" />
               </button>
             </div>
           </section>
@@ -889,12 +890,13 @@ function SplitPane({
             className={`record-button split-record-button is-${panel.phase}`}
             onClick={onRecord}
             disabled={isBusy}
+            aria-label={recordLabel(panel.phase, copy)}
             type="button"
           >
             <svg className="record-blob" viewBox="0 0 100 100" aria-hidden="true" focusable="false">
               <path d="M 75.9 39.3 Q 98 50 75.9 60.7 Q 83.9 83.9 60.7 75.9 Q 50 98 39.3 75.9 Q 16.1 83.9 24.1 60.7 Q 2 50 24.1 39.3 Q 16.1 16.1 39.3 24.1 Q 50 2 60.7 24.1 Q 83.9 16.1 75.9 39.3 Z" />
             </svg>
-            <span className="record-button-core">{recordLabel(panel.phase, copy)}</span>
+            <span className="record-button-core" aria-hidden="true" />
           </button>
         </div>
 
