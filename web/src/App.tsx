@@ -83,21 +83,19 @@ function languageNameFor(code: "source" | "target", direction: Direction): strin
 }
 
 function walkieTranscriptLabel(direction: Direction): string {
-  return `Transcripción · ${languageNameFor("source", direction)} (转录)`;
+  return "Transcripción · 转录";
 }
 
 function walkieTranslationLabel(direction: Direction): string {
-  return `Traducción · ${languageNameFor("target", direction)} (翻译)`;
+  return "Traducción · 翻译";
 }
 
 function walkieTranscriptEmpty(direction: Direction): string {
-  const sourceLanguage = languageNameFor("source", direction);
-  return `Aquí aparecerá el texto transcrito en ${sourceLanguage}. 这里会显示转录文本。`;
+  return "Aquí aparecerá el texto transcrito.\n这里会显示转录文本。";
 }
 
 function walkieTranslationEmpty(direction: Direction): string {
-  const targetLanguage = languageNameFor("target", direction);
-  return `Aquí aparecerá el texto traducido en ${targetLanguage}. 这里会显示翻译文本。`;
+  return "Aquí aparecerá el texto traducido.\n这里会显示翻译文本。";
 }
 
 function directionCopy(direction: Direction): DirectionCopy {
@@ -188,6 +186,17 @@ function statusLabel(phase: PanelPhase, copy: DirectionCopy): string {
       return copy.statusError;
     default:
       return copy.statusIdle;
+  }
+}
+
+function recordLabel(phase: PanelPhase, copy: DirectionCopy): string {
+  switch (phase) {
+    case "recording":
+      return copy.recordLabelRecording;
+    case "processing":
+      return copy.recordLabelProcessing;
+    default:
+      return copy.recordLabelIdle;
   }
 }
 
@@ -591,6 +600,7 @@ export default function App() {
               <div className="walkie-section walkie-section-translation">
                 <div className="walkie-section-header">
                   <span className="walkie-section-label">{walkieTranslationLabel(walkieDirection)}</span>
+                  <span className="walkie-language-pill">{languageNameFor("target", walkieDirection)}</span>
                   {panels.walkie.audioUrl ? (
                     <button
                       className={`mini-action ${playingKey === "walkie" ? "is-playing" : ""}`}
@@ -601,12 +611,19 @@ export default function App() {
                     </button>
                   ) : null}
                 </div>
-                <p className="walkie-section-text">{panels.walkie.translation || walkieTranslationEmpty(walkieDirection)}</p>
+                <p className={`walkie-section-text ${panels.walkie.translation ? "is-filled" : "is-empty"}`}>
+                  {panels.walkie.translation || walkieTranslationEmpty(walkieDirection)}
+                </p>
               </div>
               <div className="walkie-divider" />
               <div className="walkie-section walkie-section-transcript">
-                <span className="walkie-section-label">{walkieTranscriptLabel(walkieDirection)}</span>
-                <p className="walkie-section-text">{panels.walkie.transcript || walkieTranscriptEmpty(walkieDirection)}</p>
+                <div className="walkie-section-header">
+                  <span className="walkie-section-label">{walkieTranscriptLabel(walkieDirection)}</span>
+                  <span className="walkie-language-pill">{languageNameFor("source", walkieDirection)}</span>
+                </div>
+                <p className={`walkie-section-text ${panels.walkie.transcript ? "is-filled" : "is-empty"}`}>
+                  {panels.walkie.transcript || walkieTranscriptEmpty(walkieDirection)}
+                </p>
               </div>
             </section>
 
@@ -614,6 +631,10 @@ export default function App() {
               {panels.walkie.error ? (
                 <p className="error-banner walkie-error">{panels.walkie.error}</p>
               ) : null}
+              <div className="walkie-action-copy">
+                <span>{walkieDirection === "zh_to_es" ? "中文 → Español" : "Español → 中文"}</span>
+                <p>{walkieHint}</p>
+              </div>
               <button
                 className={`record-button walkie-record-button is-${panels.walkie.phase}`}
                 onClick={handleWalkieToggle}
@@ -623,7 +644,7 @@ export default function App() {
                 <svg className="record-blob" viewBox="0 0 100 100" aria-hidden="true" focusable="false">
                   <path d="M 75.9 39.3 Q 98 50 75.9 60.7 Q 83.9 83.9 60.7 75.9 Q 50 98 39.3 75.9 Q 16.1 83.9 24.1 60.7 Q 2 50 24.1 39.3 Q 16.1 16.1 39.3 24.1 Q 50 2 60.7 24.1 Q 83.9 16.1 75.9 39.3 Z" />
                 </svg>
-                <span className="record-button-core" />
+                <span className="record-button-core">{recordLabel(panels.walkie.phase, walkieCopy)}</span>
               </button>
             </div>
           </section>
@@ -682,6 +703,7 @@ export default function App() {
                   { label: <DirectionOptionLabel direction="es_to_zh" />, value: "es_to_zh" },
                 ]}
                 onChange={(value) => setWalkieDirection(value as Direction)}
+                className="direction-control-compact"
                 ariaLabel="Dirección"
               />
             ) : null}
@@ -874,7 +896,7 @@ function SplitPane({
             <svg className="record-blob" viewBox="0 0 100 100" aria-hidden="true" focusable="false">
               <path d="M 75.9 39.3 Q 98 50 75.9 60.7 Q 83.9 83.9 60.7 75.9 Q 50 98 39.3 75.9 Q 16.1 83.9 24.1 60.7 Q 2 50 24.1 39.3 Q 16.1 16.1 39.3 24.1 Q 50 2 60.7 24.1 Q 83.9 16.1 75.9 39.3 Z" />
             </svg>
-            <span className="record-button-core" />
+            <span className="record-button-core">{recordLabel(panel.phase, copy)}</span>
           </button>
         </div>
 
