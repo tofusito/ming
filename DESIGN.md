@@ -1,10 +1,13 @@
 ---
 name: Ming
-description: Warm, organic family translator — terracotta accents, jade states, cream foundation.
+description: Refined liquid-glass family translator — translucent depth, warm terracotta accents, jade states, cream foundation.
 colors:
   background: "#f5eee6"
   surface: "rgba(255, 250, 246, 0.52)"
   surface-strong: "rgba(255, 248, 241, 0.68)"
+  glass-tint: "rgba(255, 250, 246, 0.32)"
+  glass-highlight: "rgba(255, 255, 255, 0.72)"
+  glass-shadow: "rgba(48, 23, 15, 0.14)"
   ink: "#241615"
   muted: "#6a544d"
   line: "rgba(255, 255, 255, 0.38)"
@@ -49,6 +52,11 @@ spacing:
 elevation:
   shadow: "0 8px 32px rgba(48, 23, 15, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.55)"
   blur: "blur(28px) saturate(160%)"
+  liquid-glass:
+    background: "linear-gradient(145deg, rgba(255, 255, 255, 0.58), rgba(255, 246, 238, 0.28))"
+    backdropFilter: "blur(30px) saturate(180%)"
+    border: "1px solid rgba(255, 255, 255, 0.48)"
+    shadow: "0 18px 50px rgba(48, 23, 15, 0.14), inset 0 1px 0 rgba(255, 255, 255, 0.72), inset 0 -18px 38px rgba(217, 93, 57, 0.045)"
 components:
   button-record:
     backgroundColor: "{colors.primary}"
@@ -98,15 +106,18 @@ components:
 
 ## Overview
 
-Warmth-first, distraction-free family translator. The UI evokes a handwritten letter on cream paper — soft light, terracotta ink, jade flourishes. Nothing competes for attention with the voice button at the center.
+Warmth-first, distraction-free family translator with a refined liquid-glass interface. The UI should feel like translucent polished glass over warm paper: soft light, terracotta ink, jade state accents, and subtle depth that reacts to touch. Nothing competes for attention with the voice button at the center.
 
-The palette is rooted in warm neutrals with a single dominant accent (terracotta) and two supporting tones (gold for processing, jade for success). Glassmorphism surfaces and floating orbs add subtle depth without heaviness.
+The palette is rooted in warm neutrals with a single dominant accent (terracotta) and two supporting tones (gold for processing, jade for success). Glass surfaces, layered translucency, specular highlights, and fluid motion create a premium mobile feel without adding visual noise.
 
 ## Colors
 
 - **background (#f5eee6):** Warm cream — the paper. Every surface reads against this.
 - **surface (rgba 52%):** Semi-transparent warm white. Cards, panels, topbar — always layered over the mesh background via glassmorphism.
 - **surface-strong (rgba 68%):** Slightly more opaque variant for active/selected segments and inner containers.
+- **glass-tint (rgba 32%):** Ultra-light translucent veil for inner surfaces, halos, and pressed states.
+- **glass-highlight (rgba 72%):** Bright top-edge highlight for liquid-glass surfaces and raised controls.
+- **glass-shadow (rgba 14%):** Warm glass shadow. Use for depth below panes and active controls.
 - **ink (#241615):** Deep brown-black for all primary text. Not pure black — stays warm.
 - **muted (#6a544d):** Warm mid-brown for secondary text, captions, metadata.
 - **line (rgba white 38%):** White at low opacity. Gives glass surfaces a bright top-edge highlight rather than a warm border.
@@ -143,12 +154,27 @@ Two layout modes:
 
 All elevation uses a single warm compound shadow: `0 8px 32px rgba(48, 23, 15, 0.1)` plus an inset highlight `inset 0 1px 0 rgba(255, 255, 255, 0.55)`.
 
-Surfaces use `backdrop-filter: blur(28px) saturate(160%)` (glassmorphism) rather than opaque fills. Three floating orbs in the background give the canvas soft ambient color:
+Ming's visual language is liquid glass, not flat glassmorphism. Surfaces must combine transparency, background blur, saturation, inset highlights, and soft internal glow. Important surfaces use the `liquid-glass` token: translucent gradient fill, `backdrop-filter: blur(30px) saturate(180%)`, white highlight border, warm external shadow, and a faint terracotta inner glow.
+
+Surfaces use `backdrop-filter: blur(28px) saturate(160%)` or stronger rather than opaque fills. Three floating light fields in the background give the canvas soft ambient color:
 - **Orb A** (26rem, top-left): terracotta → gold gradient.
 - **Orb B** (28rem, bottom-right): jade.
 - **Orb C** (20rem, center): warm amber gold.
 
-No hard shadows. No dark overlays. Depth comes from blur and inset highlights, not darkness.
+No hard shadows. No dark overlays. Depth comes from blur, refraction-like gradients, inset highlights, and soft occlusion below floating surfaces, not darkness.
+
+## Liquid Glass
+
+Liquid glass is a first-class design requirement, not decorative polish. Every major UI surface should look touchable, translucent, and layered over the warm background.
+
+- **Primary panes:** Use the full `liquid-glass` treatment with visible blur, a bright top highlight, and warm internal glow.
+- **Controls:** Segment controls, language pills, and play buttons use stronger opacity than panes so they remain legible over motion.
+- **Record button:** Stays solid terracotta for affordance, but it sits inside a translucent halo ring that behaves like glass.
+- **Status pills:** Use tinted glass rather than opaque color blocks. The semantic color should be visible but quiet.
+- **Background:** Ambient gradients may move slowly, but they must stay soft enough that Chinese and Spanish text remains readable.
+- **Fallback:** If `backdrop-filter` is unsupported, use a semi-opaque warm surface with the same shadow and highlight border.
+
+Liquid glass must never reduce readability. If a surface contains long text, increase opacity before increasing shadow.
 
 ## Shapes
 
@@ -169,6 +195,8 @@ Secondary actions, direction toggles, mode switches. Fully rounded, terracotta f
 ### card
 The container for transcription + translation output. Glassmorphism surface (`surface` token + `blur` elevation). Border: `1px solid line` (white highlight). Bottom-border receives a tinted accent (terracotta for ES output, gold for ZH output) to signal direction at a glance.
 
+Cards and panes should avoid looking like plain beige boxes. Use at least two glass cues: translucent gradient fill, backdrop blur, inset highlight, soft inner tint, or a moving reflection. Text areas can be calmer than controls, but they still belong to the same liquid-glass system.
+
 ### status-*
 Four contextual states rendered as small inline pills. Each uses a tinted background and matching deep text color:
 - `status-recording` — faint terracotta (recording in progress)
@@ -185,19 +213,25 @@ All transforms use a spring easing: `cubic-bezier(0.34, 1.56, 0.64, 1)`.
 - **idlePulse** (4s, infinite): faint terracotta halo rings expanding from the record button at rest.
 - **heartbeat** (1.4s, infinite): scale 1 → 1.06 → 1 during active recording.
 - **ringPulse** (2.2s, infinite): two concentric rings expanding and fading during recording.
+- **liquidSheen** (6s-9s, subtle): a slow highlight drift across glass panes and controls. Opacity stays below 0.18.
+- **glassPress** (120ms): controls compress by 2-3%, brighten the top highlight, and slightly deepen the inner shadow.
+- **modeMorph** (260ms): switching Walkie/Split moves controls as one continuous surface, not as disconnected elements.
+- **audioReadyPop** (220ms): when translated audio is ready, the play affordance expands slightly and settles.
 - **cardReveal**: card entrance — scale 0.97 + translateY(10px) → natural, opacity 0 → 1.
 - **riseIn**: panel entrance — scale 0.98 + translateY(20px) → natural, opacity 0 → 1.
 
-Respect `prefers-reduced-motion: reduce` — strip all keyframe animations, retain only opacity transitions.
+Motion should feel fluid and physical, not busy. Prefer one strong active animation over several competing loops. Respect `prefers-reduced-motion: reduce` — strip all keyframe animations, retain only opacity transitions.
 
 ## Do's and Don'ts
 
 **Do:**
 - Use `primary` exclusively for interactive affordances (record, play, tap actions).
 - Use `secondary` and `tertiary` exclusively for status communication — never for decorative or structural elements.
-- Apply `backdrop-filter: blur(28px) saturate(160%)` to all floating surfaces (cards, topbar).
+- Apply liquid-glass treatment to all primary floating surfaces: translucent gradient, blur, saturation, highlight border, and warm shadow.
 - Use white-rgba for `line` — it reads as a glass highlight, not a divider.
 - Use `clamp()` for all font sizes to maintain readability from 320px to 1440px without breakpoint hacks.
+- Animate state transitions with spring easing and keep looped glass highlights very subtle.
+- Keep enough opacity behind text. Premium glass is useless if family members cannot read the translation instantly.
 
 **Don't:**
 - Don't use pure black (`#000000`) or pure white (`#ffffff`) as backgrounds. Always use the warm-tinted tokens.
@@ -206,3 +240,5 @@ Respect `prefers-reduced-motion: reduce` — strip all keyframe animations, reta
 - Don't use font-weight 300 or lighter. The minimum readable weight on these cream backgrounds is 400.
 - Don't use hard borders (`2px+`) — prefer `1px solid line` or no border with shadow.
 - Don't use solid opaque backgrounds for cards — always layer over the mesh with glassmorphism.
+- Don't make glass decorative at the expense of hierarchy. The record button, current language, translated text, and replay action must remain the clearest elements.
+- Don't animate every surface at once. Background ambience, record feedback, and one contextual transition are enough.

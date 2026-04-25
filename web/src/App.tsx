@@ -51,14 +51,35 @@ type DirectionCopy = {
   translationEmpty: string;
   recordLabelIdle: string;
   recordLabelRecording: string;
+  recordLabelProcessing: string;
   playLabel: string;
   playingLabel: string;
   splitTitle: string;
   splitSubtitle: string;
 };
 
-function directionLabel(direction: Direction): string {
-  return direction === "zh_to_es" ? "中文 -> Español" : "Español -> 中文";
+function walkieTranscriptLabel(direction: Direction): string {
+  return "Transcripción · 转录";
+}
+
+function walkieTranslationLabel(direction: Direction): string {
+  return "Traducción · 翻译";
+}
+
+function walkieTranscriptEmpty(direction: Direction): string {
+  return "Aquí aparecerá el texto transcrito.\n这里会显示转录文本。";
+}
+
+function walkieTranslationEmpty(direction: Direction): string {
+  return "Aquí aparecerá el texto traducido.\n这里会显示翻译文本。";
+}
+
+function splitGenericTranscriptLabel(direction: Direction): string {
+  return direction === "zh_to_es" ? "转录" : "Transcripción";
+}
+
+function splitGenericTranslationLabel(direction: Direction): string {
+  return direction === "zh_to_es" ? "Traducción" : "翻译";
 }
 
 function directionCopy(direction: Direction): DirectionCopy {
@@ -75,10 +96,11 @@ function directionCopy(direction: Direction): DirectionCopy {
       statusError: "错误",
       transcriptLabel: "识别到的中文",
       transcriptEmpty: "这里会显示识别到的中文。",
-      translationLabel: "Traducido al español",
-      translationEmpty: "Aquí aparecerá la traducción final en español.",
+      translationLabel: "翻译成西班牙语",
+      translationEmpty: "这里会显示西班牙语翻译。",
       recordLabelIdle: "说话",
-      recordLabelRecording: "停止",
+      recordLabelRecording: "在听",
+      recordLabelProcessing: "翻译中",
       playLabel: "播放",
       playingLabel: "播放中",
       splitTitle: "中文",
@@ -98,15 +120,78 @@ function directionCopy(direction: Direction): DirectionCopy {
     statusError: "Error",
     transcriptLabel: "Texto detectado en español",
     transcriptEmpty: "Aquí aparecerá la transcripción en español.",
-    translationLabel: "翻译成中文",
-    translationEmpty: "这里会显示翻译后的中文。",
+    translationLabel: "Traducido al chino",
+    translationEmpty: "Aquí aparecerá la traducción final en chino.",
     recordLabelIdle: "Hablar",
-    recordLabelRecording: "Parar",
+    recordLabelRecording: "Escucha",
+    recordLabelProcessing: "Traduciendo",
     playLabel: "Reproducir",
     playingLabel: "Sonando",
     splitTitle: "Español",
     splitSubtitle: "Habla en español",
   };
+}
+
+function floatingModeLabel(mode: Mode): string {
+  return mode === "walkie" ? "Diálogo" : "Walkie";
+}
+
+function floatingModeIcon(mode: Mode) {
+  if (mode === "walkie") {
+    return (
+      <svg className="floating-mode-svg" viewBox="0 0 28 28" aria-hidden="true" focusable="false">
+        <path d="M7 8.2c0-2 1.7-3.7 3.8-3.7h6.4c2.1 0 3.8 1.7 3.8 3.7v4.9c0 2-1.7 3.7-3.8 3.7h-4.1l-4.9 4.1v-4.1h-.3C5.7 16.8 4 15.1 4 13.1V8.2Z" />
+        <path d="M14.8 19.1h3.4l3.8 3.2v-3.2h.3c1.6 0 2.9-1.2 2.9-2.8v-3.6c0-1.2-.8-2.3-1.9-2.7" />
+      </svg>
+    );
+  }
+
+  return (
+    <svg className="floating-mode-svg" viewBox="0 0 28 28" aria-hidden="true" focusable="false">
+      <path d="M9.2 4.8h4.1c1.4 0 2.5 1.1 2.5 2.5v8.1c0 1.4-1.1 2.5-2.5 2.5H9.2c-1.4 0-2.5-1.1-2.5-2.5V7.3c0-1.4 1.1-2.5 2.5-2.5Z" />
+      <path d="M10.3 7.3h2.1" />
+      <path d="M11.3 18v4.1" />
+      <path d="M7.9 22.1h6.7" />
+      <path d="M19 8.1c1.5 1.4 2.3 3.4 2.3 5.6s-.8 4.2-2.3 5.6" />
+      <path d="M22.2 5.4c2.1 2.1 3.3 5 3.3 8.3s-1.2 6.2-3.3 8.3" />
+    </svg>
+  );
+}
+
+function modeMenuIcon(mode: Mode) {
+  return (
+    <span className="menu-icon-label">
+      {floatingModeIcon(mode)}
+      <span className="sr-only">{mode === "walkie" ? "Walkie" : "Split"}</span>
+    </span>
+  );
+}
+
+function voiceMenuIcon(enabled: boolean) {
+  return (
+    <span className={`menu-icon-label ${enabled ? "is-on" : ""}`}>
+      <svg className="floating-mode-svg" viewBox="0 0 28 28" aria-hidden="true" focusable="false">
+        <path d="M6.8 16.9h2.6l4.2 4.1V6.9L9.4 11H6.8v5.9Z" />
+        <path d="M17.4 10.2c1.2 1.1 1.9 2.5 1.9 4.1s-.7 3-1.9 4.1" />
+        <path d="M20.5 7.4c2 1.9 3.1 4.3 3.1 6.9s-1.1 5-3.1 6.9" />
+      </svg>
+      <span className="sr-only">{enabled ? "Voz activada" : "Voz desactivada"}</span>
+    </span>
+  );
+}
+
+function swapMenuIcon() {
+  return (
+    <span className="menu-icon-label">
+      <svg className="floating-mode-svg" viewBox="0 0 28 28" aria-hidden="true" focusable="false">
+        <path d="M8 9.2h10.8" />
+        <path d="M15.8 5.8l3.4 3.4-3.4 3.4" />
+        <path d="M20 18.8H9.2" />
+        <path d="M12.2 22.2l-3.4-3.4 3.4-3.4" />
+      </svg>
+      <span className="sr-only">Cambiar lados</span>
+    </span>
+  );
 }
 
 function statusLabel(phase: PanelPhase, copy: DirectionCopy): string {
@@ -121,6 +206,17 @@ function statusLabel(phase: PanelPhase, copy: DirectionCopy): string {
       return copy.statusError;
     default:
       return copy.statusIdle;
+  }
+}
+
+function recordLabel(phase: PanelPhase, copy: DirectionCopy): string {
+  switch (phase) {
+    case "recording":
+      return copy.recordLabelRecording;
+    case "processing":
+      return copy.recordLabelProcessing;
+    default:
+      return copy.recordLabelIdle;
   }
 }
 
@@ -197,6 +293,7 @@ export default function App() {
   const [walkieDirection, setWalkieDirection] = useState<Direction>("zh_to_es");
   const [splitTopLanguage, setSplitTopLanguage] = useState<"zh" | "es">("zh");
   const [speakEnabled, setSpeakEnabled] = useState(true);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const [activeKey, setActiveKey] = useState<PanelKey | null>(null);
   const [playingKey, setPlayingKey] = useState<PanelKey | null>(null);
   const [lastSplitSource, setLastSplitSource] = useState<Side | null>(null);
@@ -512,99 +609,59 @@ export default function App() {
   }, [panels.walkie.phase, walkieCopy, walkieDirection]);
 
   return (
-    <main className="app-shell">
+    <main className={`app-shell app-shell-${mode}`}>
       <div className="background-orb background-orb-a" />
       <div className="background-orb background-orb-b" />
 
       <section className={`app-frame ${mode === "split" ? "app-frame-split" : ""}`}>
         {mode === "walkie" ? (
-          <header className="topbar">
-            <div className="brand-block">
-              <span className="eyebrow">Ming</span>
-              <h1>Traductor familiar</h1>
-            </div>
-
-            <div className="topbar-actions">
-              <SegmentedControl
-                value={mode}
-                options={[
-                  { label: "Walkie", value: "walkie" },
-                  { label: "Split", value: "split" },
-                ]}
-                onChange={(value) => setMode(value as Mode)}
-              />
-
-              <button
-                className={`voice-toggle ${speakEnabled ? "voice-toggle-on" : ""}`}
-                onClick={() => setSpeakEnabled((current) => !current)}
-                type="button"
-              >
-                Voz {speakEnabled ? "on" : "off"}
-              </button>
-            </div>
-          </header>
-        ) : null}
-
-        {mode === "walkie" ? (
           <section className="walkie-layout panel-enter">
-            <div className="direction-bar">
-              <SegmentedControl
-                value={walkieDirection}
-                options={[
-                  { label: "中文 -> Español", value: "zh_to_es" },
-                  { label: "Español -> 中文", value: "es_to_zh" },
-                ]}
-                onChange={(value) => setWalkieDirection(value as Direction)}
-              />
-            </div>
-
-            <section className="hero-card">
-              <div className="hero-copy">
-                <span className={`status-pill status-${panels.walkie.phase}`}>
-                  {statusLabel(panels.walkie.phase, walkieCopy)}
-                </span>
-                <h2>{walkieCopy.heroTitle}</h2>
-                <p>{walkieHint}</p>
+            <section className="walkie-card">
+              <div className="walkie-section walkie-section-translation">
+                <div className="walkie-section-header">
+                  <span className="walkie-section-label">{walkieTranslationLabel(walkieDirection)}</span>
+                  {panels.walkie.audioUrl ? (
+                    <button
+                      className={`mini-action ${playingKey === "walkie" ? "is-playing" : ""}`}
+                      onClick={() => void playAudio("walkie")}
+                      type="button"
+                    >
+                      {playingKey === "walkie" ? walkieCopy.playingLabel : walkieCopy.playLabel}
+                    </button>
+                  ) : null}
+                </div>
+                <p className={`walkie-section-text ${panels.walkie.translation ? "is-filled" : "is-empty"}`}>
+                  {panels.walkie.translation || walkieTranslationEmpty(walkieDirection)}
+                </p>
               </div>
+              <div className="walkie-divider" />
+              <div className="walkie-section walkie-section-transcript">
+                <div className="walkie-section-header">
+                  <span className="walkie-section-label">{walkieTranscriptLabel(walkieDirection)}</span>
+                </div>
+                <p className={`walkie-section-text ${panels.walkie.transcript ? "is-filled" : "is-empty"}`}>
+                  {panels.walkie.transcript || walkieTranscriptEmpty(walkieDirection)}
+                </p>
+              </div>
+            </section>
 
+            <div className="walkie-action-bar">
+              {panels.walkie.error ? (
+                <p className="error-banner walkie-error">{panels.walkie.error}</p>
+              ) : null}
               <button
-                className={`record-button ${panels.walkie.phase === "recording" ? "is-recording" : ""} ${
-                  panels.walkie.phase === "processing" ? "is-processing" : ""
-                }`}
+                className={`record-button walkie-record-button is-${panels.walkie.phase}`}
                 onClick={handleWalkieToggle}
-                disabled={isBusy && activeKey !== "walkie"}
+                disabled={isBusy && activeKey !== "walkie" && panels.walkie.phase !== "processing"}
+                aria-label={recordLabel(panels.walkie.phase, walkieCopy)}
                 type="button"
               >
-                <span className="record-button-core">
-                  {panels.walkie.phase === "recording"
-                    ? walkieCopy.recordLabelRecording
-                    : walkieCopy.recordLabelIdle}
-                </span>
-                <span className="record-ring record-ring-a" />
-                <span className="record-ring record-ring-b" />
+                <svg className="record-blob" viewBox="0 0 100 100" aria-hidden="true" focusable="false">
+                  <path d="M 75.9 39.3 Q 98 50 75.9 60.7 Q 83.9 83.9 60.7 75.9 Q 50 98 39.3 75.9 Q 16.1 83.9 24.1 60.7 Q 2 50 24.1 39.3 Q 16.1 16.1 39.3 24.1 Q 50 2 60.7 24.1 Q 83.9 16.1 75.9 39.3 Z" />
+                </svg>
+                <span className="record-button-core" aria-hidden="true" />
               </button>
-            </section>
-
-            <section className="card-stack">
-              <TurnCard
-                accent="terracotta"
-                label={walkieCopy.transcriptLabel}
-                content={panels.walkie.transcript}
-                empty={walkieCopy.transcriptEmpty}
-              />
-              <TurnCard
-                accent="gold"
-                label={walkieCopy.translationLabel}
-                content={panels.walkie.translation}
-                empty={walkieCopy.translationEmpty}
-                actionLabel="Reproducir"
-                actionDisabled={!panels.walkie.audioUrl}
-                isPlaying={playingKey === "walkie"}
-                onAction={() => void playAudio("walkie")}
-              />
-            </section>
-
-            {panels.walkie.error ? <p className="error-banner">{panels.walkie.error}</p> : null}
+            </div>
           </section>
         ) : (
           <section className="split-layout panel-enter">
@@ -612,6 +669,7 @@ export default function App() {
               side="top"
               title={topCopy.splitTitle}
               direction={topDirection}
+              sourceDirection={lastSplitSource === "bottom" ? bottomDirection : topDirection}
               panel={panels.top}
               lastSource={lastSplitSource}
               isActive={activeKey === "top"}
@@ -621,46 +679,11 @@ export default function App() {
               onPlay={() => void playAudio("top")}
             />
 
-            <div className="split-toolbar">
-              <span className="split-language-tag">{topCopy.splitTitle}</span>
-
-              <div className="split-toolbar-actions">
-                <SegmentedControl
-                  value={mode}
-                  options={[
-                    { label: "Walkie", value: "walkie" },
-                    { label: "Split", value: "split" },
-                  ]}
-                  onChange={(value) => setMode(value as Mode)}
-                  className="segmented-control-compact"
-                  ariaLabel="Modo"
-                />
-
-                <button
-                  className={`voice-toggle voice-toggle-compact ${speakEnabled ? "voice-toggle-on" : ""}`}
-                  onClick={() => setSpeakEnabled((current) => !current)}
-                  type="button"
-                >
-                  Voz
-                </button>
-
-                <button
-                  className="swap-button"
-                  onClick={() => setSplitTopLanguage((current) => (current === "zh" ? "es" : "zh"))}
-                  type="button"
-                  disabled={isBusy}
-                >
-                  Cambiar
-                </button>
-              </div>
-
-              <span className="split-language-tag">{bottomCopy.splitTitle}</span>
-            </div>
-
             <SplitPane
               side="bottom"
               title={bottomCopy.splitTitle}
               direction={bottomDirection}
+              sourceDirection={lastSplitSource === "top" ? topDirection : bottomDirection}
               panel={panels.bottom}
               lastSource={lastSplitSource}
               isActive={activeKey === "bottom"}
@@ -672,6 +695,58 @@ export default function App() {
           </section>
         )}
       </section>
+
+      <div className={`floating-settings ${settingsOpen ? "is-open" : ""}`}>
+        {settingsOpen ? (
+          <div className="floating-menu">
+            <SegmentedControl
+              value={mode}
+              options={[
+                { label: modeMenuIcon("walkie"), value: "walkie" },
+                { label: modeMenuIcon("split"), value: "split" },
+              ]}
+              onChange={(value) => {
+                setMode(value as Mode);
+                setSettingsOpen(false);
+              }}
+              ariaLabel="Modo"
+            />
+
+            <button
+              className={`voice-toggle ${speakEnabled ? "voice-toggle-on" : ""}`}
+              onClick={() => setSpeakEnabled((current) => !current)}
+              aria-label={speakEnabled ? "Desactivar voz" : "Activar voz"}
+              type="button"
+            >
+              {voiceMenuIcon(speakEnabled)}
+            </button>
+
+            {mode === "split" ? (
+              <button
+                className="swap-button"
+                onClick={() => setSplitTopLanguage((current) => (current === "zh" ? "es" : "zh"))}
+                aria-label="Cambiar lados"
+                type="button"
+                disabled={isBusy}
+              >
+                {swapMenuIcon()}
+              </button>
+            ) : null}
+          </div>
+        ) : null}
+
+        <button
+          className="floating-settings-button"
+          onClick={() => setSettingsOpen((current) => !current)}
+          type="button"
+          aria-expanded={settingsOpen}
+          aria-label="Abrir ajustes"
+        >
+          <span className="floating-settings-icon" aria-hidden="true">
+            {settingsOpen ? "×" : floatingModeIcon(mode)}
+          </span>
+        </button>
+      </div>
     </main>
   );
 }
@@ -683,7 +758,7 @@ function SegmentedControl({
   className,
   ariaLabel,
 }: {
-  options: Array<{ label: string; value: string }>;
+  options: Array<{ label: React.ReactNode; value: string }>;
   value: string;
   onChange: (value: string) => void;
   className?: string;
@@ -720,6 +795,7 @@ function TurnCard({
   content,
   empty,
   actionLabel,
+  actionActiveLabel,
   actionDisabled,
   isPlaying,
   onAction,
@@ -729,6 +805,7 @@ function TurnCard({
   content: string;
   empty: string;
   actionLabel?: string;
+  actionActiveLabel?: string;
   actionDisabled?: boolean;
   isPlaying?: boolean;
   onAction?: () => void;
@@ -744,7 +821,7 @@ function TurnCard({
             onClick={onAction}
             type="button"
           >
-            {isPlaying ? "Sonando" : actionLabel}
+            {isPlaying ? actionActiveLabel || "Sonando" : actionLabel}
           </button>
         ) : null}
       </div>
@@ -757,6 +834,7 @@ function SplitPane({
   side,
   title,
   direction,
+  sourceDirection,
   panel,
   lastSource,
   isActive,
@@ -768,6 +846,7 @@ function SplitPane({
   side: Side;
   title: string;
   direction: Direction;
+  sourceDirection: Direction;
   panel: PanelState;
   lastSource: Side | null;
   isActive: boolean;
@@ -777,11 +856,12 @@ function SplitPane({
   onPlay: () => void;
 }) {
   const copy = directionCopy(direction);
-  const isSourcePane = lastSource === side;
-  const primaryLabel = isSourcePane ? copy.transcriptLabel : copy.translationLabel;
+  const sourceCopy = directionCopy(sourceDirection);
+  const isSourcePane = lastSource === null || lastSource === side;
+  const primaryLabel = isSourcePane ? splitGenericTranscriptLabel(direction) : splitGenericTranslationLabel(sourceDirection);
   const primaryText = isSourcePane ? panel.transcript : panel.translation;
-  const primaryEmpty = isSourcePane ? copy.transcriptEmpty : copy.translationEmpty;
-  const secondaryLabel = isSourcePane ? copy.translationLabel : copy.transcriptLabel;
+  const primaryEmpty = isSourcePane ? copy.transcriptEmpty : sourceCopy.translationEmpty;
+  const secondaryLabel = isSourcePane ? sourceCopy.translationLabel : sourceCopy.transcriptLabel;
   const secondaryText = isSourcePane ? panel.translation : panel.transcript;
 
   return (
@@ -790,9 +870,8 @@ function SplitPane({
         <div className="split-pane-header">
           <div>
             <span className="eyebrow">{title}</span>
-            <h2>{isSourcePane ? copy.splitSubtitle : primaryLabel}</h2>
+            <h2>{primaryLabel}</h2>
           </div>
-          <span className={`status-pill status-${panel.phase}`}>{statusLabel(panel.phase, copy)}</span>
         </div>
 
         <div className="split-stage">
@@ -807,28 +886,26 @@ function SplitPane({
         </div>
 
         <div className="split-action-row">
+          {panel.audioUrl ? (
+            <button
+              className={`mini-action split-play-action ${isPlaying ? "is-playing" : ""}`}
+              onClick={onPlay}
+              type="button"
+            >
+              {isPlaying ? copy.playingLabel : copy.playLabel}
+            </button>
+          ) : null}
           <button
-            className={`record-button split-record-button ${panel.phase === "recording" ? "is-recording" : ""} ${
-              panel.phase === "processing" ? "is-processing" : ""
-            }`}
+            className={`record-button split-record-button is-${panel.phase}`}
             onClick={onRecord}
             disabled={isBusy}
+            aria-label={recordLabel(panel.phase, copy)}
             type="button"
           >
-            <span className="record-button-core">
-              {panel.phase === "recording" ? copy.recordLabelRecording : copy.recordLabelIdle}
-            </span>
-            <span className="record-ring record-ring-a" />
-            <span className="record-ring record-ring-b" />
-          </button>
-
-          <button
-            className={`mini-action split-play-action ${isPlaying ? "is-playing" : ""}`}
-            disabled={!panel.audioUrl}
-            onClick={onPlay}
-            type="button"
-          >
-            {isPlaying ? copy.playingLabel : copy.playLabel}
+            <svg className="record-blob" viewBox="0 0 100 100" aria-hidden="true" focusable="false">
+              <path d="M 75.9 39.3 Q 98 50 75.9 60.7 Q 83.9 83.9 60.7 75.9 Q 50 98 39.3 75.9 Q 16.1 83.9 24.1 60.7 Q 2 50 24.1 39.3 Q 16.1 16.1 39.3 24.1 Q 50 2 60.7 24.1 Q 83.9 16.1 75.9 39.3 Z" />
+            </svg>
+            <span className="record-button-core" aria-hidden="true" />
           </button>
         </div>
 
