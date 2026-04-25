@@ -158,6 +158,42 @@ function floatingModeIcon(mode: Mode) {
   );
 }
 
+function modeMenuIcon(mode: Mode) {
+  return (
+    <span className="menu-icon-label">
+      {floatingModeIcon(mode)}
+      <span className="sr-only">{mode === "walkie" ? "Walkie" : "Split"}</span>
+    </span>
+  );
+}
+
+function voiceMenuIcon(enabled: boolean) {
+  return (
+    <span className={`menu-icon-label ${enabled ? "is-on" : ""}`}>
+      <svg className="floating-mode-svg" viewBox="0 0 28 28" aria-hidden="true" focusable="false">
+        <path d="M6.8 16.9h2.6l4.2 4.1V6.9L9.4 11H6.8v5.9Z" />
+        <path d="M17.4 10.2c1.2 1.1 1.9 2.5 1.9 4.1s-.7 3-1.9 4.1" />
+        <path d="M20.5 7.4c2 1.9 3.1 4.3 3.1 6.9s-1.1 5-3.1 6.9" />
+      </svg>
+      <span className="sr-only">{enabled ? "Voz activada" : "Voz desactivada"}</span>
+    </span>
+  );
+}
+
+function swapMenuIcon() {
+  return (
+    <span className="menu-icon-label">
+      <svg className="floating-mode-svg" viewBox="0 0 28 28" aria-hidden="true" focusable="false">
+        <path d="M8 9.2h10.8" />
+        <path d="M15.8 5.8l3.4 3.4-3.4 3.4" />
+        <path d="M20 18.8H9.2" />
+        <path d="M12.2 22.2l-3.4-3.4 3.4-3.4" />
+      </svg>
+      <span className="sr-only">Cambiar lados</span>
+    </span>
+  );
+}
+
 function statusLabel(phase: PanelPhase, copy: DirectionCopy): string {
   switch (phase) {
     case "recording":
@@ -666,8 +702,8 @@ export default function App() {
             <SegmentedControl
               value={mode}
               options={[
-                { label: "Walkie", value: "walkie" },
-                { label: "Split", value: "split" },
+                { label: modeMenuIcon("walkie"), value: "walkie" },
+                { label: modeMenuIcon("split"), value: "split" },
               ]}
               onChange={(value) => {
                 setMode(value as Mode);
@@ -679,19 +715,21 @@ export default function App() {
             <button
               className={`voice-toggle ${speakEnabled ? "voice-toggle-on" : ""}`}
               onClick={() => setSpeakEnabled((current) => !current)}
+              aria-label={speakEnabled ? "Desactivar voz" : "Activar voz"}
               type="button"
             >
-              Voz {speakEnabled ? "on" : "off"}
+              {voiceMenuIcon(speakEnabled)}
             </button>
 
             {mode === "split" ? (
               <button
                 className="swap-button"
                 onClick={() => setSplitTopLanguage((current) => (current === "zh" ? "es" : "zh"))}
+                aria-label="Cambiar lados"
                 type="button"
                 disabled={isBusy}
               >
-                Cambiar lados
+                {swapMenuIcon()}
               </button>
             ) : null}
           </div>
