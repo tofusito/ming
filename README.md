@@ -5,6 +5,8 @@ Self-hosted family voice translator for:
 - Mandarin Chinese / Sichuan-flavored Chinese
 - Andalusian Spanish / natural family Spanish
 
+**Status**: personal app / work in progress. Ming is optimized for my family context first, but the source is available as a reference for similar self-hosted voice translation setups.
+
 ## Stack
 
 - `web`: mobile-first React + Vite PWA
