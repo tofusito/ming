@@ -707,7 +707,6 @@ export default function App() {
           <span className="floating-settings-icon" aria-hidden="true">
             {settingsOpen ? "×" : floatingModeIcon(mode)}
           </span>
-          <span className="floating-settings-label">{settingsOpen ? "Cerrar" : floatingModeLabel(mode)}</span>
         </button>
       </div>
     </main>
