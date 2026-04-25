@@ -600,7 +600,6 @@ export default function App() {
               <div className="walkie-section walkie-section-translation">
                 <div className="walkie-section-header">
                   <span className="walkie-section-label">{walkieTranslationLabel(walkieDirection)}</span>
-                  <span className="walkie-language-pill">{languageNameFor("target", walkieDirection)}</span>
                   {panels.walkie.audioUrl ? (
                     <button
                       className={`mini-action ${playingKey === "walkie" ? "is-playing" : ""}`}
@@ -619,7 +618,6 @@ export default function App() {
               <div className="walkie-section walkie-section-transcript">
                 <div className="walkie-section-header">
                   <span className="walkie-section-label">{walkieTranscriptLabel(walkieDirection)}</span>
-                  <span className="walkie-language-pill">{languageNameFor("source", walkieDirection)}</span>
                 </div>
                 <p className={`walkie-section-text ${panels.walkie.transcript ? "is-filled" : "is-empty"}`}>
                   {panels.walkie.transcript || walkieTranscriptEmpty(walkieDirection)}
